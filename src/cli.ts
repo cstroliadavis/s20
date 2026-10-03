@@ -1,3 +1,10 @@
+/**
+ * @file S20 Command Line Interface (CLI) module.
+ *
+ * Integrates the Coliner command engine with the S20 application service layer.
+ * Loads the YAML CLI schema, injects dynamic task completion providers, and
+ * maps CLI events ('event-add' and 'event-list') to service operations with terminal output.
+ */
 import fs from 'node:fs';
 import path from 'node:path';
 import {
@@ -11,10 +18,28 @@ import type { S20Config } from './config.js';
 import type { createS20Service } from './s20-service.js';
 import type { createStorage } from './storage.js';
 
+/**
+ * External dependencies required to instantiate and execute the S20 CLI.
+ */
 export interface CliDependencies {
+  /**
+   * Runtime configuration containing CSV storage file paths and rounding rules.
+   */
   config: S20Config;
+
+  /**
+   * Optional custom filesystem path to the YAML CLI schema definition file.
+   */
   configPath?: string;
+
+  /**
+   * Application service instance coordinating time calculations, storage, and suggestions.
+   */
   service: ReturnType<typeof createS20Service>;
+
+  /**
+   * CSV storage engine instance for direct data inspection and persistence operations.
+   */
   storage: ReturnType<typeof createStorage>;
 }
 
@@ -40,7 +65,8 @@ function formatEventSummary(id: number, task: string, start: string): string {
 }
 
 /**
- * Injects dynamic provider functions into parsed schema parameters.
+ * Injects dynamic provider functions into parsed schema parameters so that shell tab completion
+ * and interactive prompts can query live task data from the application service.
  */
 function injectDynamicProviders(
   schema: CliConfig,
@@ -55,7 +81,8 @@ function injectDynamicProviders(
 }
 
 /**
- * Loads YAML CLI schema from disk and injects dynamic service providers.
+ * Loads the YAML CLI schema definition from disk using Coliner's config loader and injects dynamic
+ * task suggestion providers before instantiation.
  */
 function loadCliSchema(
   configPath: string | undefined,
@@ -71,7 +98,8 @@ function loadCliSchema(
 }
 
 /**
- * Registers event listeners on coliner instance for add and list actions.
+ * Registers event listeners on the Coliner instance for 'event-add' and 'event-list' actions,
+ * coordinating service calls and console output formatting.
  */
 function registerCliHandlers(
   coliner: ReturnType<typeof createColiner>,
@@ -111,7 +139,8 @@ function registerCliHandlers(
 }
 
 /**
- * Resolves filesystem path to the YAML CLI schema file.
+ * Resolves the absolute filesystem path to the YAML CLI schema definition file, checking an
+ * explicit path override, current directory, or package root fallback.
  */
 function resolveSchemaPath(configPath?: string): string {
   if (configPath) return configPath;
@@ -124,10 +153,20 @@ function resolveSchemaPath(configPath?: string): string {
 }
 
 /**
- * Creates S20 Command Line Interface application instance from YAML schema.
+ * Creates and initializes an S20 Command Line Interface application instance from the YAML schema.
  *
- * @param deps CLI dependencies including service and config
- * @returns Configured Coliner CLI application
+ * @param deps Injected CLI dependencies including service, storage, and configuration options
+ * @returns Fully configured Coliner CLI instance ready for execution and shell completion
+ * @example
+ * ```ts
+ * const config = createDefaultConfig();
+ * const storage = createStorage(config);
+ * const service = createS20Service({ config, storage });
+ * const cli = createS20Cli({ config, service, storage });
+ *
+ * await cli.execute(['Ticket 5260', '--duration=1.5']);
+ * // Records an event for 'Ticket 5260' and logs confirmation to console
+ * ```
  */
 export function createS20Cli(deps: CliDependencies) {
   const schema = loadCliSchema(deps.configPath, deps.service);
