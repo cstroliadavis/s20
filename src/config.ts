@@ -26,7 +26,7 @@ export interface S20Config {
   projectFilePath: string;
   roundingDirection: RoundingDirection;
   roundingIncrement: number;
-  taskDefaults: Record<string, TaskDefaultConfig>;
+  taskDefaults: Record<string, TaskDefaultConfig | undefined>;
   tasksFilePath: string;
 }
 
