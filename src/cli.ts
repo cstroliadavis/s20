@@ -1,94 +1,35 @@
-import { type CliConfig, type CommandConfig, createColiner } from 'coliner';
+import fs from 'node:fs';
+import path from 'node:path';
+import {
+  type CliConfig,
+  type CommandConfig,
+  createColiner,
+  createConfigLoader,
+  type ParamConfig,
+} from 'coliner';
 import type { S20Config } from './config.js';
 import type { createS20Service } from './s20-service.js';
 import type { createStorage } from './storage.js';
 
 export interface CliDependencies {
   config: S20Config;
+  configPath?: string;
   service: ReturnType<typeof createS20Service>;
   storage: ReturnType<typeof createStorage>;
 }
 
 /**
- * Builds command schema for recording time events.
+ * Locates default add command configuration from command list.
  */
-function buildAddCommand(service: ReturnType<typeof createS20Service>): CommandConfig {
-  return {
-    description: 'Record a time tracking event',
-    isDefault: true,
-    name: 'add',
-    params: [
-      {
-        description: 'Task description or ticket identifier',
-        items: () => service.getTaskSuggestions(),
-        name: 'task',
-        type: 'text',
-      },
-      {
-        alias: 's',
-        description: 'Start time (e.g. 13:00 or 5:30pm)',
-        name: 'start',
-        type: 'time',
-      },
-      {
-        alias: 'd',
-        description: 'Duration (e.g. 15m, 1h, 2.25)',
-        name: 'duration',
-        type: 'text',
-      },
-      {
-        default: true,
-        description: 'Mark event as completed',
-        name: 'done',
-        negator: true,
-        type: 'flag',
-      },
-      {
-        alias: 'n',
-        description: 'Context or circumstance notes',
-        name: 'notes',
-        type: 'text',
-      },
-      {
-        description: 'Event date (YYYY-MM-DD)',
-        name: 'date',
-        type: 'date',
-      },
-    ],
-    triggers: 'event-add',
-  };
+function findAddCommand(commands: CommandConfig[]): CommandConfig | undefined {
+  return commands.find((c) => c.name === 'add');
 }
 
 /**
- * Builds declarative Coliner CLI schema definition.
+ * Locates task parameter in command configuration.
  */
-function buildCliConfig(service: ReturnType<typeof createS20Service>): CliConfig {
-  return {
-    commands: [buildAddCommand(service), buildListCommand()],
-    description: 'S20 (Spouse Two Point Oh) CLI time tracking tool',
-    name: 's20',
-    version: '0.1.0',
-  };
-}
-
-/**
- * Builds command schema for listing recorded events.
- */
-function buildListCommand(): CommandConfig {
-  return {
-    description: 'List tracked events',
-    name: 'list',
-    params: [
-      {
-        alias: 'l',
-        default: 10,
-        description: 'Maximum events to display',
-        name: 'limit',
-        type: 'number',
-      },
-    ],
-    triggers: 'event-list',
-  };
+function findTaskParam(cmd?: CommandConfig): ParamConfig | undefined {
+  return cmd?.params?.find((p) => p.name === 'task');
 }
 
 /**
@@ -96,6 +37,37 @@ function buildListCommand(): CommandConfig {
  */
 function formatEventSummary(id: number, task: string, start: string): string {
   return `Recorded event #${id}: ${task} at ${start}`;
+}
+
+/**
+ * Injects dynamic provider functions into parsed schema parameters.
+ */
+function injectDynamicProviders(
+  schema: CliConfig,
+  service: ReturnType<typeof createS20Service>,
+): void {
+  const addCmd = findAddCommand(schema.commands);
+  const taskParam = findTaskParam(addCmd);
+
+  if (taskParam) {
+    taskParam.items = () => service.getTaskSuggestions();
+  }
+}
+
+/**
+ * Loads YAML CLI schema from disk and injects dynamic service providers.
+ */
+function loadCliSchema(
+  configPath: string | undefined,
+  service: ReturnType<typeof createS20Service>,
+): CliConfig {
+  const resolvedPath = resolveSchemaPath(configPath);
+  const loader = createConfigLoader();
+  const schema = loader.loadFromFile(resolvedPath);
+
+  injectDynamicProviders(schema, service);
+
+  return schema;
 }
 
 /**
@@ -127,13 +99,26 @@ function registerCliHandlers(
 }
 
 /**
- * Creates S20 Command Line Interface application instance.
+ * Resolves filesystem path to the YAML CLI schema file.
+ */
+function resolveSchemaPath(configPath?: string): string {
+  if (configPath) return configPath;
+
+  const localPath = path.resolve(import.meta.dirname, 'cli.yaml');
+
+  if (fs.existsSync(localPath)) return localPath;
+
+  return path.resolve(import.meta.dirname, '../cli.yaml');
+}
+
+/**
+ * Creates S20 Command Line Interface application instance from YAML schema.
  *
  * @param deps CLI dependencies including service and config
  * @returns Configured Coliner CLI application
  */
 export function createS20Cli(deps: CliDependencies) {
-  const schema = buildCliConfig(deps.service);
+  const schema = loadCliSchema(deps.configPath, deps.service);
   const coliner = createColiner({ config: schema });
 
   registerCliHandlers(coliner, deps.service);

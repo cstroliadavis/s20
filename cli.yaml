@@ -1,0 +1,43 @@
+name: s20
+version: 0.1.0
+description: S20 (Spouse Two Point Oh) CLI time tracking tool
+
+commands:
+  - name: add
+    description: Record a time tracking event
+    isDefault: true
+    triggers: event-add
+    params:
+      - name: task
+        description: Task description or ticket identifier
+        type: text
+      - name: start
+        description: Start time (e.g. 13:00 or 5:30pm)
+        alias: s
+        type: time
+      - name: duration
+        description: Duration (e.g. 15m, 1h, 2.25)
+        alias: d
+        type: text
+      - name: done
+        description: Mark event as completed
+        type: flag
+        negator: true
+        default: true
+      - name: notes
+        description: Context or circumstance notes
+        alias: n
+        type: text
+      - name: date
+        description: Event date (YYYY-MM-DD)
+        type: date
+
+  - name: list
+    description: List tracked events
+    triggers: event-list
+    params:
+      - name: limit
+        description: Maximum events to display
+        alias: l
+        type: number
+        default: 10
