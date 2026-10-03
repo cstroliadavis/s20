@@ -1,0 +1,14 @@
+{
+  "folders": [
+    {
+      "path": ".",
+    },
+    {
+      "path": "../coliner",
+    },
+    {
+      "path": "../csv-lib",
+    },
+  ],
+  "settings": {},
+}
