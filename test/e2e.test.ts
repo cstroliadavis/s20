@@ -26,6 +26,7 @@ describe('e2e cli execution', () => {
     const proc = runCli(['Ticket 5260'], tmpDir);
 
     expect(proc.exitCode).toBe(0);
+    expect(proc.stdout.toString()).toContain('Recorded event #1: Ticket 5260');
 
     const eventsPath = path.join(tmpDir, 'data', 'events.csv');
     const tasksPath = path.join(tmpDir, 'data', 'tasks.csv');
@@ -36,8 +37,8 @@ describe('e2e cli execution', () => {
     const eventsContent = fs.readFileSync(eventsPath, 'utf-8');
     const tasksContent = fs.readFileSync(tasksPath, 'utf-8');
 
-    expect(eventsContent).toContain('Ticket 5260');
-    expect(tasksContent).toContain('Ticket 5260');
+    expect(eventsContent).toContain('Ticket 5260,false,');
+    expect(tasksContent).toMatch(/Ticket 5260,,\d{4}-\d{2}-\d{2} \d{2}:\d{2},,1/);
   });
 
   it('runs s20 add with all flags and then lists events', () => {
@@ -56,10 +57,17 @@ describe('e2e cli execution', () => {
     );
 
     expect(addProc.exitCode).toBe(0);
+    expect(addProc.stdout.toString()).toContain('Recorded event #1: Ticket 5260 at 05:30');
 
     const listProc = runCli(['list'], tmpDir);
 
     expect(listProc.exitCode).toBe(0);
+    expect(listProc.stdout.toString()).toContain('Ticket 5260');
+
+    const tasksPath = path.join(tmpDir, 'data', 'tasks.csv');
+    const tasksContent = fs.readFileSync(tasksPath, 'utf-8');
+
+    expect(tasksContent).toContain('Ticket 5260,,2026-10-03 05:30,2026-10-03 07:45');
   });
 
   it('resolves shell completion suggestions dynamically for recorded tasks', () => {

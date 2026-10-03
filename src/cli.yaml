@@ -23,7 +23,6 @@ commands:
         description: Mark event as completed
         type: flag
         negator: true
-        default: true
       - name: notes
         description: Context or circumstance notes
         alias: n

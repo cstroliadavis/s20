@@ -21,7 +21,8 @@ spreadsheets.
   15m) when unspecified.
 - **Dynamic Shell Tab Completion**: Tab completions suggest recent unfinished tasks first, followed
   by prior tasks from `tasks.csv`, while accepting any custom task string.
-- **Negator Support**: Flags like `--done` (default) can be inverted with `--no-done`.
+- **Negator Support**: Flags like `--done` default to `false` when omitted and can be inverted
+  with `--no-done`.
 
 ## CSV Data Schema
 
@@ -76,15 +77,17 @@ Aliases are also supported:
 s20 "Ticket 5260" -s 14:00 -d 45m -n "Sprint planning meeting"
 ```
 
-### 3. Unfinished / Ongoing Tasks
+### 3. Completing vs Ongoing Tasks
 
-Use the `--no-done` negator flag to indicate the task remains open:
+Events default to ongoing (`is done: false`, leaving the task `finished` timestamp empty).
+When finishing a task, pass `--done` to mark it completed and record its finish timestamp:
 
 ```bash
-s20 "Ticket 5260" --no-done
+s20 "Ticket 5260" --done
 ```
 
-Unfinished tasks will appear first in tab completion suggestions for future entries.
+Unfinished tasks appear first in tab completion suggestions for future entries. You can also
+explicitly specify `--no-done` if needed.
 
 ### 4. Listing Events
 

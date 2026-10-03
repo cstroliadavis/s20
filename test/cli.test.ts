@@ -47,10 +47,25 @@ describe('cli', () => {
     await env.cli.execute(['Ticket 5260']);
 
     const events = await env.service.listEvents();
+    const tasks = await env.service.listTasks();
 
     expect(events).toHaveLength(1);
     expect(events[0]?.task).toBe('Ticket 5260');
+    expect(events[0]?.isDone).toBe(false);
+    expect(tasks[0]?.finished).toBe('');
+  });
+
+  it('marks event as completed when --done flag is provided', async () => {
+    env = setup();
+
+    await env.cli.execute(['add', 'Completed Task', '--done']);
+
+    const events = await env.service.listEvents();
+    const tasks = await env.service.listTasks();
+
+    expect(events).toHaveLength(1);
     expect(events[0]?.isDone).toBe(true);
+    expect(tasks[0]?.finished).not.toBe('');
   });
 
   it('executes add command with explicit start, duration, and notes flags', async () => {

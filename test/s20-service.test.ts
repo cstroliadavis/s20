@@ -42,14 +42,26 @@ describe('s20-service', () => {
     env = setup();
 
     const event = await env.service.recordEvent({ task: 'Ticket 5260' });
+    const tasks = await env.service.listTasks();
 
     expect(event.id).toBe(1);
     expect(event.task).toBe('Ticket 5260');
-    expect(event.isDone).toBe(true);
+    expect(event.isDone).toBe(false);
     expect(event.duration).toBe(1);
     expect(event.notes).toBe('');
     expect(event.start).toMatch(/^\d{2}:\d{2}$/);
     expect(event.date).toMatch(/^\d{4}-\d{2}-\d{2}$/);
+    expect(tasks[0]?.finished).toBe('');
+  });
+
+  it('marks task finished and sets finish timestamp when done is true', async () => {
+    env = setup();
+
+    const event = await env.service.recordEvent({ done: true, task: 'Ticket 5260' });
+    const tasks = await env.service.listTasks();
+
+    expect(event.isDone).toBe(true);
+    expect(tasks[0]?.finished).not.toBe('');
   });
 
   it('records event with explicit start, duration, done status, and notes', async () => {

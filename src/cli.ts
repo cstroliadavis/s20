@@ -86,15 +86,27 @@ function registerCliHandlers(
       start: params.start as string | undefined,
       task: String(params.task ?? ''),
     });
+    const summary = formatEventSummary(result.id, result.task, result.start);
 
-    return formatEventSummary(result.id, result.task, result.start);
+    console.log(summary);
+
+    return summary;
   });
 
   coliner.on('event-list', async ({ params }) => {
     const events = await service.listEvents();
     const limit = Number(params.limit) || 10;
+    const recent = events.slice(-limit);
 
-    return events.slice(-limit);
+    if (recent.length === 0) {
+      console.log('No events recorded yet.');
+
+      return recent;
+    }
+
+    console.table(recent);
+
+    return recent;
   });
 }
 

@@ -35,7 +35,7 @@ function buildEventPayload(options: AddEventOptions, config: S20Config): EventIn
   const duration = resolveDuration(options.task, options.duration, config);
   const start = resolveStartTime(options.start, duration, config);
   const date = resolveDateString(options.date);
-  const isDone = options.done ?? true;
+  const isDone = Boolean(options.done);
   const notes = options.notes ?? '';
 
   return {
