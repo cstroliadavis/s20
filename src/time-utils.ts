@@ -1,10 +1,23 @@
+/**
+ * @file S20 time parsing, formatting, and rounding utilities.
+ *
+ * Implements algorithms for parsing duration strings (e.g. '15m', '1.5h', '90m'),
+ * calculating default start times, computing finish times, and rounding to minute increments.
+ */
 import type { RoundingDirection } from './config.js';
 
 /**
  * Options for customizing time rounding behavior.
  */
 export interface TimeRoundingOptions {
+  /**
+   * Rounding direction: 'nearest', 'up', or 'down'. Defaults to 'nearest'.
+   */
   direction?: RoundingDirection;
+
+  /**
+   * Minute increment step (e.g. 15 for 15-minute rounding). Defaults to 15.
+   */
   increment?: number;
 }
 
@@ -124,6 +137,11 @@ function roundMinutes(minutes: number, increment: number, direction: RoundingDir
  * @param durationHours Event duration in decimal hours
  * @param options Rounding configuration options
  * @returns Rounded start time string (HH:MM)
+ * @example
+ * ```ts
+ * const start = calculateDefaultStartTime('13:10', 1, { direction: 'nearest', increment: 15 });
+ * // Returns '12:15'
+ * ```
  */
 export function calculateDefaultStartTime(
   refTime: string,
@@ -145,6 +163,11 @@ export function calculateDefaultStartTime(
  * @param startTime Start time string (HH:MM)
  * @param durationHours Duration in decimal hours
  * @returns Finish time string (HH:MM)
+ * @example
+ * ```ts
+ * const finish = calculateFinishTime('13:00', 1.5);
+ * // Returns '14:30'
+ * ```
  */
 export function calculateFinishTime(startTime: string, durationHours: number): string {
   const startMinutes = parseTimeToMinutes(startTime);
@@ -158,6 +181,11 @@ export function calculateFinishTime(startTime: string, durationHours: number): s
  *
  * @param hours Decimal hour value
  * @returns Formatted duration string (e.g. '1h 30m')
+ * @example
+ * ```ts
+ * const formatted = formatDuration(1.25);
+ * // Returns '1h 15m'
+ * ```
  */
 export function formatDuration(hours: number): string {
   const totalMinutes = Math.round(hours * 60);
@@ -172,6 +200,11 @@ export function formatDuration(hours: number): string {
  *
  * @param date Reference date object
  * @returns Current time string
+ * @example
+ * ```ts
+ * const now = getCurrentTimeString();
+ * // Returns current time formatted as 'HH:MM'
+ * ```
  */
 export function getCurrentTimeString(date: Date = new Date()): string {
   const hours = date.getHours();
@@ -185,6 +218,11 @@ export function getCurrentTimeString(date: Date = new Date()): string {
  *
  * @param date Reference date object
  * @returns Current date string
+ * @example
+ * ```ts
+ * const today = getTodayDateString();
+ * // Returns today's date formatted as 'YYYY-MM-DD'
+ * ```
  */
 export function getTodayDateString(date: Date = new Date()): string {
   const y = date.getFullYear();
@@ -199,6 +237,11 @@ export function getTodayDateString(date: Date = new Date()): string {
  *
  * @param durationVal Duration input string or number
  * @returns Decimal hours
+ * @example
+ * ```ts
+ * const hours = parseDuration('45m');
+ * // Returns 0.75
+ * ```
  */
 export function parseDuration(durationVal: string | number | undefined): number {
   if (typeof durationVal === 'number') return durationVal;
@@ -213,6 +256,11 @@ export function parseDuration(durationVal: string | number | undefined): number 
  * @param timeStr Time string in HH:MM format
  * @param options Rounding configuration options
  * @returns Rounded time string
+ * @example
+ * ```ts
+ * const rounded = roundTimeToIncrement('13:07', { direction: 'nearest', increment: 15 });
+ * // Returns '13:00'
+ * ```
  */
 export function roundTimeToIncrement(timeStr: string, options?: TimeRoundingOptions): string {
   const minutes = parseTimeToMinutes(timeStr);

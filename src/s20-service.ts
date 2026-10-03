@@ -1,3 +1,9 @@
+/**
+ * @file S20 application service layer.
+ *
+ * Coordinates between user input options, configuration defaults, time utility rounding,
+ * and the CSV storage engine. Exposes methods for logging events and querying tasks.
+ */
 import type { S20Config } from './config.js';
 import type { createStorage } from './storage.js';
 import {
@@ -12,19 +18,49 @@ import type { EventInput, EventRecord } from './types.js';
  * Input options for adding a new tracking event via the service.
  */
 export interface AddEventOptions {
+  /**
+   * Explicit event date (Date instance or YYYY-MM-DD string). Defaults to current date.
+   */
   date?: string | Date;
+
+  /**
+   * Completion flag. When true, records a finished timestamp on the task. Defaults to false.
+   */
   done?: boolean;
+
+  /**
+   * Event duration string ('15m', '1h', '2.25') or decimal hours number.
+   */
   duration?: string | number;
+
+  /**
+   * Optional notes or contextual reason for the event.
+   */
   notes?: string;
+
+  /**
+   * 24-hour start time string (HH:MM). When omitted, calculated from duration and rounding rules.
+   */
   start?: string;
+
+  /**
+   * Task title or ticket identifier.
+   */
   task: string;
 }
 
 /**
- * Service dependencies bundle.
+ * Service dependencies bundle required to instantiate the S20 service.
  */
 export interface ServiceDependencies {
+  /**
+   * Global configuration containing rounding rules, durations, and file paths.
+   */
   config: S20Config;
+
+  /**
+   * CSV storage engine interface for persisting events and synchronizing tasks.
+   */
   storage: ReturnType<typeof createStorage>;
 }
 
@@ -116,6 +152,15 @@ function resolveStartTime(
  *
  * @param deps Config and storage dependencies
  * @returns Application service instance
+ * @example
+ * ```ts
+ * const config = createDefaultConfig();
+ * const storage = createStorage(config);
+ * const service = createS20Service({ config, storage });
+ *
+ * const event = await service.recordEvent({ task: 'Ticket 5260' });
+ * // Records event in events.csv and updates tasks.csv
+ * ```
  */
 export function createS20Service(deps: ServiceDependencies) {
   const _ = {

@@ -1,3 +1,10 @@
+/**
+ * @file S20 CSV storage engine.
+ *
+ * Provides persistence and synchronization logic for events and tasks using csv-lib.
+ * Handles auto-incrementing record IDs, task duration accumulation, status updates,
+ * and completion suggestion ranking.
+ */
 import fs from 'node:fs';
 import { appendCsvFile, readCsvFile, writeCsvFile } from 'csv-lib';
 import type { S20Config } from './config.js';
@@ -297,6 +304,14 @@ async function syncTaskRecord(
  *
  * @param config S20 configuration settings
  * @returns Storage interface
+ * @example
+ * ```ts
+ * const config = createDefaultConfig();
+ * const storage = createStorage(config);
+ *
+ * const events = await storage.getEvents();
+ * // Returns array of EventRecord entries from events.csv
+ * ```
  */
 export function createStorage(config: S20Config) {
   const _ = {

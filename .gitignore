@@ -5,3 +5,4 @@ dist
 data/*.csv
 **/data/*.csv
 test-data/
+test-*/
