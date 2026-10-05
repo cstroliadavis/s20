@@ -1,3 +1,7 @@
+**s20 v0.1.0**
+
+***
+
 # S20 (Spouse Two Point Oh)
 
 [![Bun](https://img.shields.io/badge/Runtime-Bun-black?logo=bun)](https://bun.sh)
@@ -405,13 +409,13 @@ bun run docs
 ## Developer Documentation
 
 For in-depth architecture diagrams, data synchronization algorithms, component boundaries, and
-contributor guidelines, refer to the [Developer Guide](DEVELOPER.md).
+contributor guidelines, refer to the [Developer Guide](_media/DEVELOPER.md).
 
 API reference documentation is published in both Markdown and HTML formats:
 
-- **[Markdown API Reference](docs/markdown/modules.md)**: Native Markdown docs browsable directly
+- **[Markdown API Reference](_media/modules.md)**: Native Markdown docs browsable directly
   on GitHub.
-- **[HTML API Reference](docs/html/index.html)**: Searchable documentation generated via
+- **[HTML API Reference](_media/index.html)**: Searchable documentation generated via
   `bun run docs`.
 
 ```bash

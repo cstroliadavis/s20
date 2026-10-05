@@ -8,20 +8,9 @@
     "packages/cli/src/index.ts",
     "packages/csv/src/index.ts"
   ],
-  "highlightLanguages": [
-    "bash",
-    "css",
-    "fish",
-    "html",
-    "javascript",
-    "json",
-    "sh",
-    "typescript",
-    "yaml",
-    "zsh"
-  ],
   "includeVersion": true,
   "name": "s20",
-  "out": "docs/html",
+  "out": "docs/markdown",
+  "plugin": ["typedoc-plugin-markdown"],
   "readme": "README.md"
 }

@@ -13,7 +13,9 @@
   "module": "./packages/core/src/index.ts",
   "types": "./packages/core/src/index.ts",
   "scripts": {
-    "docs": "typedoc",
+    "docs": "typedoc --options typedoc.json && typedoc --options typedoc.markdown.json",
+    "docs:html": "typedoc --options typedoc.json",
+    "docs:markdown": "typedoc --options typedoc.markdown.json",
     "format": "prettier --write .",
     "format:check": "prettier --check .",
     "lint": "eslint .",
@@ -45,6 +47,7 @@
     "prettier": "^3.9.9",
     "temporal-spec": "^1.0.1",
     "typedoc": "^0.28.20",
+    "typedoc-plugin-markdown": "^4.13.1",
     "typescript": "^5.8.2",
     "typescript-eslint": "^8.71.0"
   }

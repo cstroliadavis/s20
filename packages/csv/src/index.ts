@@ -1,5 +1,5 @@
 /**
- * @module CSV parsing, serialization, and file I/O operations.
+ * CSV parsing, serialization, and file I/O operations.
  */
 export type {
   CsvParser,
