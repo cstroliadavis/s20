@@ -48,10 +48,10 @@ S20/
 │   └── tasks.csv              # Aggregate task registry
 ├── docs/                      # Generated TypeDoc HTML reference documentation
 ├── packages/
-│   ├── cli/                   # @s20/cli: Coliner command engine & argument parser
+│   ├── cli/                   # @s20/cli: Command-line engine & argument parser
 │   │   ├── src/
 │   │   │   ├── arg-parser.ts  # Token scanning, argument matching & flag resolution
-│   │   │   ├── coliner.ts     # Coliner instance factory & execution pipeline
+│   │   │   ├── cli-tool.ts    # CLI tool instance factory & execution pipeline
 │   │   │   ├── config-loader.ts # YAML schema loader & validator
 │   │   │   ├── help-formatter.ts # Console help generation
 │   │   │   ├── index.ts       # Public exports for @s20/cli
@@ -104,7 +104,7 @@ S20/
 
 ### `@s20/cli` (`packages/cli`)
 
-- Recreates the command-line parsing and event execution subsystem derived from Coliner.
+- Implements a schema-driven command-line parsing and event execution subsystem.
 - Handles YAML configuration loading, positional arguments, short and long flags, boolean negators
   (`--no-done`), time and type coercers, and shell completion scripts.
 

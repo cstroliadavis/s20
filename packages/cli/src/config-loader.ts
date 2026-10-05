@@ -18,9 +18,6 @@ const VALID_PARAM_TYPES: ParamType[] = [
 ];
 
 const DEFAULT_CONFIG_FILENAMES = [
-  'coliner.yaml',
-  'coliner.yml',
-  'coliner.json',
   'cli.yaml',
   'cli.yml',
   'cli.json',

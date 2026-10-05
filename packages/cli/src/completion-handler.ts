@@ -65,7 +65,7 @@ async function handleCompleteSubcommand(
  * Displays completion help documentation.
  */
 function handleHelpSubcommand(args: string[], config: CliConfig): ParsedCommandResult {
-  const cliName = config.name ?? 'coliner';
+  const cliName = config.name ?? 'cli';
   const helpText = renderCompletionHelp(cliName);
 
   console.log(helpText);
@@ -81,7 +81,7 @@ function handleScriptSubcommand(
   args: string[],
   config: CliConfig,
 ): ParsedCommandResult {
-  const cliName = config.name ?? 'coliner';
+  const cliName = config.name ?? 'cli';
   const script = generateCompletionScript(shell, cliName);
 
   console.log(script);

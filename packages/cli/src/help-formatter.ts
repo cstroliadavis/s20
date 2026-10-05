@@ -11,7 +11,7 @@ function formatAliasFlag(alias: string): string {
  * Formats CLI program name and version banner string.
  */
 function formatCliTitle(name?: string, version?: string): string {
-  const cliName = name ?? 'coliner';
+  const cliName = name ?? 'cli';
   const ver = version ? ` v${version}` : '';
 
   return `${cliName}${ver}`;
@@ -68,7 +68,7 @@ function formatCommandRow(cmd: CommandConfig): string {
  */
 function formatGeneralHeader(config: CliConfig): string[] {
   const title = formatCliTitle(config.name, config.version);
-  const cliName = config.name ?? 'coliner';
+  const cliName = config.name ?? 'cli';
   const lines = [title];
 
   if (config.description) {
@@ -156,7 +156,7 @@ function normalizeAliases(alias: string | string[] = []): string[] {
  */
 export function createHelpFormatter(config: CliConfig) {
   const _ = {
-    cliName: config.name ?? 'coliner',
+    cliName: config.name ?? 'cli',
     config,
   };
 

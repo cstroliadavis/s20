@@ -10,7 +10,7 @@ import path from 'node:path';
 import {
   type CliConfig,
   type CommandConfig,
-  createColiner,
+  createCliTool,
   createConfigLoader,
   type ParamConfig,
 } from '@s20/cli';
@@ -81,7 +81,7 @@ function injectDynamicProviders(
 }
 
 /**
- * Loads the YAML CLI schema definition from disk using Coliner's config loader and injects dynamic
+ * Loads the YAML CLI schema definition from disk using @s20/cli's config loader and injects dynamic
  * task suggestion providers before instantiation.
  */
 function loadCliSchema(
@@ -98,14 +98,14 @@ function loadCliSchema(
 }
 
 /**
- * Registers event listeners on the Coliner instance for 'event-add' and 'event-list' actions,
+ * Registers event listeners on the CLI tool instance for 'event-add' and 'event-list' actions,
  * coordinating service calls and console output formatting.
  */
 function registerCliHandlers(
-  coliner: ReturnType<typeof createColiner>,
+  cliTool: ReturnType<typeof createCliTool>,
   service: ReturnType<typeof createS20Service>,
 ): void {
-  coliner.on('event-add', async ({ params }) => {
+  cliTool.on('event-add', async ({ params }) => {
     const result = await service.recordEvent({
       date: params.date as Date | string | undefined,
       done: params.done as boolean | undefined,
@@ -121,7 +121,7 @@ function registerCliHandlers(
     return summary;
   });
 
-  coliner.on('event-list', async ({ params }) => {
+  cliTool.on('event-list', async ({ params }) => {
     const events = await service.listEvents();
     const limit = Number(params.limit) || 10;
     const recent = events.slice(-limit);
@@ -156,7 +156,7 @@ function resolveSchemaPath(configPath?: string): string {
  * Creates and initializes an S20 Command Line Interface application instance from the YAML schema.
  *
  * @param deps Injected CLI dependencies including service, storage, and configuration options
- * @returns Fully configured Coliner CLI instance ready for execution and shell completion
+ * @returns Fully configured CLI tool instance ready for execution and shell completion
  * @example
  * ```ts
  * const config = createDefaultConfig();
@@ -170,9 +170,9 @@ function resolveSchemaPath(configPath?: string): string {
  */
 export function createS20Cli(deps: CliDependencies) {
   const schema = loadCliSchema(deps.configPath, deps.service);
-  const coliner = createColiner({ config: schema });
+  const cliTool = createCliTool({ config: schema });
 
-  registerCliHandlers(coliner, deps.service);
+  registerCliHandlers(cliTool, deps.service);
 
-  return coliner;
+  return cliTool;
 }

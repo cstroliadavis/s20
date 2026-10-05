@@ -159,15 +159,18 @@ export interface ExecutionOptions {
 }
 
 /**
- * Initialization options for creating a Coliner application instance.
+ * Initialization options for creating a CLI tool application instance.
  */
-export interface ColinerOptions {
+export interface CliToolOptions {
   /** Inline CliConfig object or relative path to a configuration file. */
   config?: CliConfig | string;
 
   /** Custom working directory for resolving configuration and file paths. */
   cwd?: string;
 }
+
+/** Alias for CliToolOptions. */
+export type CliOptions = CliToolOptions;
 
 /**
  * Result of inspecting arguments for help commands or flags.
@@ -192,9 +195,9 @@ export interface ResolvedCommand {
 }
 
 /**
- * Core interface representing an initialized Coliner CLI application instance.
+ * Core interface representing an initialized CLI tool application instance.
  */
-export interface ColinerInstance {
+export interface CliToolInstance {
   /**
    * Executes CLI parsing and triggers registered event listeners.
    *
@@ -247,9 +250,9 @@ export interface ColinerInstance {
    *
    * @param eventName Event trigger name
    * @param handler Event callback handler
-   * @returns Coliner instance for chaining
+   * @returns CLI tool instance for chaining
    */
-  on: (eventName: string, handler: EventHandler) => ColinerInstance;
+  on: (eventName: string, handler: EventHandler) => CliToolInstance;
 
   /**
    * Parses argument tokens without triggering event handlers.
@@ -259,3 +262,6 @@ export interface ColinerInstance {
    */
   parse: (args: string[]) => ParsedCommandResult;
 }
+
+/** Alias for CliToolInstance. */
+export type CliInstance = CliToolInstance;

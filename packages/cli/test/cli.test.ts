@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'bun:test';
-import { createColiner } from '../src/index.js';
+import { createCliTool } from '../src/index.js';
 
 describe('cli workspace engine', () => {
   it('parses commands, coerces parameters, and triggers events', async () => {
@@ -7,7 +7,7 @@ describe('cli workspace engine', () => {
     let receivedTask = '';
     let receivedDone = false;
 
-    const cli = createColiner({
+    const cli = createCliTool({
       config: {
         commands: [
           {
@@ -41,7 +41,7 @@ describe('cli workspace engine', () => {
   it('handles explicit flag parameters correctly', async () => {
     let receivedDone = false;
 
-    const cli = createColiner({
+    const cli = createCliTool({
       config: {
         commands: [
           {

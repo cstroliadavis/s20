@@ -10,8 +10,8 @@ import { resolveCompletions } from './completion-resolver.js';
 import { fillMissingSelectParams } from './select-filler.js';
 import type {
   CliConfig,
-  ColinerInstance,
-  ColinerOptions,
+  CliToolInstance,
+  CliToolOptions,
   CommandConfig,
   EventHandler,
   ExecutionOptions,
@@ -19,7 +19,7 @@ import type {
   ResolvedCommand,
 } from './types.js';
 
-export type { ColinerOptions } from './types.js';
+export type { CliOptions, CliToolInstance, CliToolOptions } from './types.js';
 
 /**
  * Constructs parsed command result for help screens.
@@ -45,7 +45,7 @@ function buildHelpResult(
  */
 async function checkSpecialCommands(
   opts: NormalizedExecutionOptions,
-  context: ColinerContext,
+  context: CliToolContext,
 ): Promise<ParsedCommandResult | null> {
   if (isCompletionCommand(opts.args, context.config.commands)) {
     return handleCompletionCommand(opts.args, context.config);
@@ -66,7 +66,7 @@ async function checkSpecialCommands(
  * Runs the end-to-end command execution workflow with prompts and handlers.
  */
 async function executeWorkflow(
-  context: ColinerContext,
+  context: CliToolContext,
   options?: ExecutionOptions | string[],
 ): Promise<ParsedCommandResult> {
   const opts = normalizeOptions(options);
@@ -85,7 +85,7 @@ async function executeWorkflow(
 /**
  * Extracts optional custom working directory from options argument.
  */
-function extractOptionCwd(options: CliConfig | ColinerOptions | string): string | undefined {
+function extractOptionCwd(options: CliConfig | CliToolOptions | string): string | undefined {
   return typeof options === 'object' && 'cwd' in options ? options.cwd : undefined;
 }
 
@@ -99,12 +99,12 @@ function formatUnknownCommandError(token?: string): Error {
 }
 
 /**
- * Initializes shared internal services and context for Coliner.
+ * Initializes shared internal services and context for the CLI tool.
  */
-function initColinerContext(initOptions: CliConfig | ColinerOptions | string): ColinerContext {
-  const cwd = resolveColinerCwd(initOptions);
+function initCliToolContext(initOptions: CliConfig | CliToolOptions | string): CliToolContext {
+  const cwd = resolveCliToolCwd(initOptions);
   const loader = createConfigLoader(cwd);
-  const resolvedConfig = resolveColinerConfig(initOptions, loader, cwd);
+  const resolvedConfig = resolveCliToolConfig(initOptions, loader, cwd);
   const coercer = createParamCoercer(cwd);
   const parser = createArgParser(coercer);
   const helpFormatter = createHelpFormatter(resolvedConfig);
@@ -122,7 +122,7 @@ function initColinerContext(initOptions: CliConfig | ColinerOptions | string): C
 /**
  * Type guard checking if argument is an inline CliConfig object.
  */
-function isRawCliConfig(options: CliConfig | ColinerOptions): options is CliConfig {
+function isRawCliConfig(options: CliConfig | CliToolOptions): options is CliConfig {
   return 'commands' in options && Array.isArray(options.commands);
 }
 
@@ -147,7 +147,7 @@ function normalizeOptions(options?: ExecutionOptions | string[]): NormalizedExec
  */
 function parseCliArgs(
   args: string[],
-  context: ColinerContext,
+  context: CliToolContext,
   stdinContent?: string,
 ): ParsedCommandResult {
   const { command, commandArgs } = resolveTargetCommand(args, context.config.commands);
@@ -189,8 +189,8 @@ function resolveArgList(args?: string[]): string[] {
 /**
  * Resolves and validates CLI configuration across supported initialization inputs.
  */
-function resolveColinerConfig(
-  initOptions: CliConfig | ColinerOptions | string,
+function resolveCliToolConfig(
+  initOptions: CliConfig | CliToolOptions | string,
   loader: ReturnType<typeof createConfigLoader>,
   cwd: string,
 ): CliConfig {
@@ -202,23 +202,23 @@ function resolveColinerConfig(
     return initOptions;
   }
 
-  return resolveFromObjectConfig(initOptions as ColinerOptions, loader, cwd);
+  return resolveFromObjectConfig(initOptions as CliToolOptions, loader, cwd);
 }
 
 /**
  * Determines effective working directory from options or system process.
  */
-function resolveColinerCwd(initOptions: CliConfig | ColinerOptions | string): string {
+function resolveCliToolCwd(initOptions: CliConfig | CliToolOptions | string): string {
   const customCwd = extractOptionCwd(initOptions);
 
   return customCwd ?? process.cwd();
 }
 
 /**
- * Resolves configuration from ColinerOptions object.
+ * Resolves configuration from CliToolOptions object.
  */
 function resolveFromObjectConfig(
-  options: ColinerOptions,
+  options: CliToolOptions,
   loader: ReturnType<typeof createConfigLoader>,
   cwd: string,
 ): CliConfig {
@@ -263,27 +263,26 @@ async function triggerHandlers(
 }
 
 /**
- * Creates and initializes a Coliner CLI application instance.
+ * Creates and initializes a CLI tool application instance.
  *
  * @param initOptions Configuration object, file path, or options
- * @returns Coliner application instance
+ * @returns CLI tool application instance
  * @example
  * ```ts
- * const cli = createColiner({ config: 'coliner.yaml' });
+ * const cli = createCliTool({ config: 'cli.yaml' });
  * cli.on('create-user', ({ params }) => console.log(params));
  * await cli.execute();
  * // Executes the CLI and triggers handlers
  * ```
  */
-export function createColiner(
-  initOptions: CliConfig | ColinerOptions | string = {},
-): ColinerInstance {
-  const _ = initColinerContext(initOptions);
+export function createCliTool(
+  initOptions: CliConfig | CliToolOptions | string = {},
+): CliToolInstance {
+  const _ = initCliToolContext(initOptions);
 
-  const instance: ColinerInstance = {
+  const instance: CliToolInstance = {
     execute: (opts) => executeWorkflow(_, opts),
-    generateCompletionScript: (shell) =>
-      generateCompletionScript(shell, _.config.name ?? 'coliner'),
+    generateCompletionScript: (shell) => generateCompletionScript(shell, _.config.name ?? 'cli'),
     getCommand: (name) => _.config.commands.find((c) => c.name === name),
     getCompletions: (args) => resolveCompletions(_.config, args),
     getConfig: () => _.config,
@@ -299,7 +298,10 @@ export function createColiner(
   return instance;
 }
 
-interface ColinerContext {
+/** Alias for createCliTool. */
+export const createCli = createCliTool;
+
+interface CliToolContext {
   coercer: ReturnType<typeof createParamCoercer>;
   config: CliConfig;
   cwd: string;

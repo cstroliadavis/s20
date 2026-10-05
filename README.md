@@ -196,7 +196,7 @@ s20 list -l 25
 
 ### 5. Shell Tab Completion (`s20 completion`)
 
-S20 provides rich, dynamic shell autocompletion powered by Coliner. When typing `s20 "T<TAB>"`, it
+S20 provides rich, dynamic shell autocompletion powered by `@s20/cli`. When typing `s20 "T<TAB>"`, it
 dynamically inspects your `tasks.csv` file and suggests:
 
 1. **Unfinished / Open Tasks** (prioritized at the top of suggestions).
