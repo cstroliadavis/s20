@@ -88,11 +88,7 @@ function buildEventPayload(options: AddEventOptions, config: S20Config): EventIn
  * Formats a Date instance into YYYY-MM-DD string.
  */
 function formatDateObject(date: Date): string {
-  const y = date.getFullYear();
-  const m = String(date.getMonth() + 1).padStart(2, '0');
-  const d = String(date.getDate()).padStart(2, '0');
-
-  return `${y}-${m}-${d}`;
+  return getTodayDateString(date);
 }
 
 /**

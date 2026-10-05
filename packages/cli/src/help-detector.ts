@@ -1,6 +1,7 @@
 import type { CommandConfig, HelpDetection } from './types.js';
 
 const HELP_FLAGS = new Set(['--help', '-h', 'help']);
+const HELP_OPTIONS = new Set(['--help', '-h']);
 
 /**
  * Checks for subcommand or flag-based explicit help requests.
@@ -53,7 +54,7 @@ function isHelpDueToNoArgs(args: string[], commands: CommandConfig[]): boolean {
  * Checks if a string token matches --help or -h.
  */
 function isHelpFlag(arg: string): boolean {
-  return ['--help', '-h'].includes(arg);
+  return HELP_OPTIONS.has(arg);
 }
 
 /**

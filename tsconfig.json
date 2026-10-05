@@ -11,6 +11,8 @@
     "strictNullChecks": true,
     "esModuleInterop": true,
     "skipLibCheck": true,
+    "moduleDetection": "force",
+    "verbatimModuleSyntax": true,
     "forceConsistentCasingInFileNames": true,
     "types": ["bun"],
     "paths": {

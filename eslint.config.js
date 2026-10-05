@@ -487,6 +487,17 @@ export default tseslint.config(
       'local/guard-patterns': ['error', { maxLen: 100 }],
       'local/prefer-includes': 'error',
       'local/sort-function-declarations': 'error',
+      'no-restricted-globals': [
+        'error',
+        {
+          message: 'Use Number.isNaN instead of loose global isNaN.',
+          name: 'isNaN',
+        },
+        {
+          message: 'Use Number.isFinite instead of loose global isFinite.',
+          name: 'isFinite',
+        },
+      ],
       // Stylistic Rules
       '@stylistic/comma-dangle': ['error', 'always-multiline'],
       '@stylistic/max-len': [

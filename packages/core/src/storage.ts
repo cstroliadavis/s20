@@ -85,11 +85,7 @@ function computeFinishTimestamp(event: EventInput): string {
  * Calculates next incremental ID for a collection of records.
  */
 function computeNextId(records: { id: number }[]): number {
-  if (records.length === 0) return 1;
-
-  const ids = records.map((r) => r.id);
-
-  return Math.max(...ids) + 1;
+  return records.reduce((max, r) => Math.max(max, r.id), 0) + 1;
 }
 
 /**
@@ -214,15 +210,9 @@ function mapTaskToRow(task: TaskRecord): Record<string, string> {
 async function queryTaskSuggestions(config: S20Config): Promise<string[]> {
   const tasks = await readTaskRecords(config);
   const sorted = sortTasksForSuggestions(tasks);
-  const unique = new Set<string>();
+  const trimmed = sorted.map((t) => t.task.trim()).filter(Boolean);
 
-  for (const t of sorted) {
-    if (t.task.trim()) {
-      unique.add(t.task.trim());
-    }
-  }
-
-  return Array.from(unique);
+  return Array.from(new Set(trimmed));
 }
 
 /**
@@ -273,10 +263,11 @@ async function saveTaskRecords(tasks: TaskRecord[], filePath: string): Promise<v
  * Sorts task records with unfinished items prioritized at the beginning.
  */
 function sortTasksForSuggestions(tasks: TaskRecord[]): TaskRecord[] {
-  const unfinished = tasks.filter((t) => t.finished === '');
-  const finished = tasks.filter((t) => t.finished !== '');
+  const groups = Object.groupBy(tasks, (t) => (t.finished === '' ? 'unfinished' : 'finished'));
+  const unfinished = groups.unfinished ?? [];
+  const finished = groups.finished ?? [];
 
-  return [...unfinished.reverse(), ...finished.reverse()];
+  return [...unfinished.toReversed(), ...finished.toReversed()];
 }
 
 /**

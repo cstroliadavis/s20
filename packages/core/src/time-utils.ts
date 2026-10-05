@@ -21,34 +21,7 @@ export interface TimeRoundingOptions {
   increment?: number;
 }
 
-/**
- * Composes hours and minutes components into human-readable duration string.
- */
-function composeDurationString(hours: number, minutes: number): string {
-  if (hours > 0) return composeFullDuration(hours, minutes);
-
-  return `${minutes}m`;
-}
-
-/**
- * Composes duration string when hour component is positive.
- */
-function composeFullDuration(hours: number, minutes: number): string {
-  if (minutes > 0) return `${hours}h ${minutes}m`;
-
-  return `${hours}h`;
-}
-
-/**
- * Formats minute count into 24-hour HH:MM string with wraparound.
- */
-function formatMinutesToTime(totalMinutes: number): string {
-  const normalized = ((totalMinutes % 1440) + 1440) % 1440;
-  const hours = Math.floor(normalized / 60);
-  const minutes = normalized % 60;
-
-  return `${String(hours).padStart(2, '0')}:${String(minutes).padStart(2, '0')}`;
-}
+const DURATION_FORMATTER = new Intl.DurationFormat('en', { style: 'narrow' });
 
 /**
  * Extracts rounding direction from options with default fallback.
@@ -65,12 +38,23 @@ function getRoundingIncrement(options?: TimeRoundingOptions): number {
 }
 
 /**
+ * Normalizes time string to standard 2-digit HH:MM format for Temporal parsing.
+ */
+function normalizeTimeString(timeStr: string): string {
+  const parts = timeStr.trim().split(':');
+  const h = (parts[0] ?? '0').padStart(2, '0');
+  const m = (parts[1] ?? '0').padStart(2, '0');
+
+  return `${h}:${m}`;
+}
+
+/**
  * Parses hour-denominated duration strings (e.g. '1.5h').
  */
 function parseHourString(val: string): number {
   const num = Number(val.replace(/h$/i, '').trim());
 
-  if (isNaN(num)) return 1;
+  if (Number.isNaN(num)) return 1;
 
   return num;
 }
@@ -81,7 +65,7 @@ function parseHourString(val: string): number {
 function parseMinuteString(val: string): number {
   const num = Number(val.replace(/m$/i, '').trim());
 
-  if (isNaN(num)) return 1;
+  if (Number.isNaN(num)) return 1;
 
   return num / 60;
 }
@@ -92,7 +76,7 @@ function parseMinuteString(val: string): number {
 function parseNumericDuration(val: string): number {
   const num = Number(val);
 
-  if (isNaN(num)) return 1;
+  if (Number.isNaN(num)) return 1;
 
   return num;
 }
@@ -110,24 +94,13 @@ function parseRawDuration(val: string): number {
 }
 
 /**
- * Parses 24-hour HH:MM string into total minutes from midnight.
+ * Maps RoundingDirection configuration to Temporal.RoundingMode string.
  */
-function parseTimeToMinutes(timeStr: string): number {
-  const parts = timeStr.split(':');
-  const hours = Number(parts[0] ?? '0');
-  const minutes = Number(parts[1] ?? '0');
+function toTemporalRoundingMode(direction: RoundingDirection): 'ceil' | 'floor' | 'halfExpand' {
+  if (direction === 'up') return 'ceil';
+  if (direction === 'down') return 'floor';
 
-  return hours * 60 + minutes;
-}
-
-/**
- * Rounds a total minute value to nearest increment according to direction.
- */
-function roundMinutes(minutes: number, increment: number, direction: RoundingDirection): number {
-  if (direction === 'up') return Math.ceil(minutes / increment) * increment;
-  if (direction === 'down') return Math.floor(minutes / increment) * increment;
-
-  return Math.round(minutes / increment) * increment;
+  return 'halfExpand';
 }
 
 /**
@@ -148,13 +121,18 @@ export function calculateDefaultStartTime(
   durationHours: number,
   options?: TimeRoundingOptions,
 ): string {
-  const refMinutes = parseTimeToMinutes(refTime);
-  const startRawMinutes = refMinutes - Math.round(durationHours * 60);
   const increment = getRoundingIncrement(options);
   const direction = getRoundingDirection(options);
-  const rounded = roundMinutes(startRawMinutes, increment, direction);
+  const roundingMode = toTemporalRoundingMode(direction);
+  const ref = Temporal.PlainTime.from(normalizeTimeString(refTime));
+  const startRaw = ref.subtract({ minutes: Math.round(durationHours * 60) });
+  const rounded = startRaw.round({
+    roundingIncrement: increment,
+    roundingMode,
+    smallestUnit: 'minute',
+  });
 
-  return formatMinutesToTime(rounded);
+  return rounded.toString({ smallestUnit: 'minute' });
 }
 
 /**
@@ -170,10 +148,10 @@ export function calculateDefaultStartTime(
  * ```
  */
 export function calculateFinishTime(startTime: string, durationHours: number): string {
-  const startMinutes = parseTimeToMinutes(startTime);
-  const finishMinutes = startMinutes + Math.round(durationHours * 60);
+  const start = Temporal.PlainTime.from(normalizeTimeString(startTime));
+  const finish = start.add({ minutes: Math.round(durationHours * 60) });
 
-  return formatMinutesToTime(finishMinutes);
+  return finish.toString({ smallestUnit: 'minute' });
 }
 
 /**
@@ -192,7 +170,9 @@ export function formatDuration(hours: number): string {
   const h = Math.floor(totalMinutes / 60);
   const m = totalMinutes % 60;
 
-  return composeDurationString(h, m);
+  if (h === 0 && m === 0) return '0m';
+
+  return DURATION_FORMATTER.format({ hours: h, minutes: m });
 }
 
 /**
@@ -206,11 +186,17 @@ export function formatDuration(hours: number): string {
  * // Returns current time formatted as 'HH:MM'
  * ```
  */
-export function getCurrentTimeString(date: Date = new Date()): string {
-  const hours = date.getHours();
-  const minutes = date.getMinutes();
+export function getCurrentTimeString(date?: Date): string {
+  if (date) {
+    const tz = Temporal.Now.timeZoneId();
+    const plainTime = Temporal.Instant.fromEpochMilliseconds(date.getTime())
+      .toZonedDateTimeISO(tz)
+      .toPlainTime();
 
-  return `${String(hours).padStart(2, '0')}:${String(minutes).padStart(2, '0')}`;
+    return plainTime.toString({ smallestUnit: 'minute' });
+  }
+
+  return Temporal.Now.plainTimeISO().toString({ smallestUnit: 'minute' });
 }
 
 /**
@@ -224,12 +210,17 @@ export function getCurrentTimeString(date: Date = new Date()): string {
  * // Returns today's date formatted as 'YYYY-MM-DD'
  * ```
  */
-export function getTodayDateString(date: Date = new Date()): string {
-  const y = date.getFullYear();
-  const m = String(date.getMonth() + 1).padStart(2, '0');
-  const d = String(date.getDate()).padStart(2, '0');
+export function getTodayDateString(date?: Date): string {
+  if (date) {
+    const tz = Temporal.Now.timeZoneId();
+    const plainDate = Temporal.Instant.fromEpochMilliseconds(date.getTime())
+      .toZonedDateTimeISO(tz)
+      .toPlainDate();
 
-  return `${y}-${m}-${d}`;
+    return plainDate.toString();
+  }
+
+  return Temporal.Now.plainDateISO().toString();
 }
 
 /**
@@ -263,10 +254,15 @@ export function parseDuration(durationVal: string | number | undefined): number 
  * ```
  */
 export function roundTimeToIncrement(timeStr: string, options?: TimeRoundingOptions): string {
-  const minutes = parseTimeToMinutes(timeStr);
   const increment = getRoundingIncrement(options);
   const direction = getRoundingDirection(options);
-  const rounded = roundMinutes(minutes, increment, direction);
+  const roundingMode = toTemporalRoundingMode(direction);
+  const time = Temporal.PlainTime.from(normalizeTimeString(timeStr));
+  const rounded = time.round({
+    roundingIncrement: increment,
+    roundingMode,
+    smallestUnit: 'minute',
+  });
 
-  return formatMinutesToTime(rounded);
+  return rounded.toString({ smallestUnit: 'minute' });
 }

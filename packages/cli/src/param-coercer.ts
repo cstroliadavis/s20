@@ -24,7 +24,7 @@ const FLAG_FALSY_VALUES = new Set(['0', 'false', 'n', 'no']);
 function coerceDate(value: unknown, paramName: string): Date {
   const date = new Date(String(value));
 
-  if (isNaN(date.getTime())) {
+  if (Number.isNaN(date.getTime())) {
     throw new TypeError(`Parameter '${paramName}' expects a valid date, received: '${value}'`);
   }
 
@@ -76,7 +76,7 @@ function coerceKeyword(value: unknown, paramName: string): string {
 function coerceNumber(value: unknown, paramName: string): number {
   const parsed = Number(value);
 
-  if (value === '' || isNaN(parsed)) {
+  if (value === '' || Number.isNaN(parsed)) {
     throw new TypeError(`Parameter '${paramName}' expects a valid number, received: '${value}'`);
   }
 
@@ -201,7 +201,7 @@ function matchCustomSelect(value: unknown, items: (string | number)[]): string |
 function matchNumberSelect(value: unknown, items: (string | number)[], name: string): number {
   const num = Number(value);
 
-  if (!isNaN(num) && items.includes(num)) return num;
+  if (!Number.isNaN(num) && items.includes(num)) return num;
 
   throw new TypeError(
     `Parameter '${name}' expects one of [${items.join(', ')}], received: '${value}'`,
