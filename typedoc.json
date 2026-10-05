@@ -3,7 +3,11 @@
   "cleanOutputDir": true,
   "disableGit": true,
   "disableSources": true,
-  "entryPoints": ["src/index.ts"],
+  "entryPoints": [
+    "packages/core/src/index.ts",
+    "packages/cli/src/index.ts",
+    "packages/csv/src/index.ts"
+  ],
   "highlightLanguages": [
     "bash",
     "css",

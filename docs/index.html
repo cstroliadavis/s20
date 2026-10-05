@@ -12,10 +12,13 @@
 <p><a href="https://bun.sh"><img src="https://img.shields.io/badge/Runtime-Bun-black?logo=bun" alt="Bun"></a>
 <a href="https://www.typescriptlang.org/"><img src="https://img.shields.io/badge/Language-TypeScript-blue?logo=typescript" alt="TypeScript"></a>
 <a href="https://opensource.org/licenses/MIT"><img src="https://img.shields.io/badge/License-MIT-yellow.svg" alt="License: MIT"></a></p>
-<p>A fast, lightweight, and structured CLI time tracking tool built for <strong>Bun</strong> using
-[coliner](file:///Users/christopherstrolia-davis/Library/CloudStorage/GoogleDrive-christopher.stroliadavis@gmail.com/My%20Drive/ag-projects/coliner)
-and
-[csv-lib](file:///Users/christopherstrolia-davis/Library/CloudStorage/GoogleDrive-christopher.stroliadavis@gmail.com/My%20Drive/ag-projects/csv-lib).</p>
+<p>A fast, lightweight, and structured CLI time tracking tool built for <strong>Bun</strong> as a modular monolith
+with dedicated internal workspace packages:</p>
+<ul>
+<li><code>@s20/core</code>: Application domain logic, CSV storage engine, time calculations, and CLI integration.</li>
+<li><code>@s20/cli</code>: Lightweight CLI command engine, argument tokenizer, and autocompletion subsystem.</li>
+<li><code>@s20/csv</code>: RFC 4180 CSV parser, serializer, and file streaming library.</li>
+</ul>
 <p>S20 tracks work sessions with zero friction, automatically synchronizing chronological events and
 aggregate task summaries across clean, version-controllable CSV files.</p>
 <hr>
@@ -63,7 +66,7 @@ time and round to clean 15-minute boundaries (e.g. 13:12 with 1h duration become
 <code>Break</code> = 15m, <code>Meeting</code> = 30m).</li>
 <li><strong>Dynamic Shell Autocompletion</strong>: Autocompletes tasks dynamically from your CSV history,
 prioritizing open/unfinished tasks while accepting any new task name.</li>
-<li><strong>RFC 4180 CSV Engine</strong>: Powered by <code>csv-lib</code> for reliable escaping, quoting, and row streaming.</li>
+<li><strong>RFC 4180 CSV Engine</strong>: Powered by <code>@s20/csv</code> for reliable escaping, quoting, and row streaming.</li>
 </ul>
 <hr>
 <h2 id="quick-start" class="tsd-anchor-link">Quick Start<a href="#quick-start" aria-label="Permalink" class="tsd-anchor-icon"><svg viewBox="0 0 24 24" aria-hidden="true"><use href="assets/icons.svg#icon-anchor"></use></svg></a></h2>
@@ -86,8 +89,8 @@ the first positional argument as the task description:</p>
 </code><button type="button">Copy</button></pre>
 
 <p><strong>Output:</strong></p>
-<pre><code><span class="hl-5">Recorded</span><span class="hl-2"> </span><span class="hl-5">event</span><span class="hl-2"> #</span><span class="hl-6">1</span><span class="hl-2">: </span><span class="hl-5">Ticket</span><span class="hl-2"> </span><span class="hl-6">5260</span><span class="hl-2"> </span><span class="hl-5">at</span><span class="hl-2"> </span><span class="hl-6">14</span><span class="hl-2">:</span><span class="hl-6">15</span>
-</code><button>Copy</button></pre>
+<pre><code class="text">Recorded event #1: Ticket 5260 at 14:15
+</code><button type="button">Copy</button></pre>
 
 <p>This single command:</p>
 <ol>
@@ -101,7 +104,7 @@ and rounding to the nearest 15-minute mark.</li>
 <hr>
 <h3 id="2-detailed-event-recording-" class="tsd-anchor-link">2. Detailed Event Recording (<code>s20 add</code>)<a href="#2-detailed-event-recording-" aria-label="Permalink" class="tsd-anchor-icon"><svg viewBox="0 0 24 24" aria-hidden="true"><use href="assets/icons.svg#icon-anchor"></use></svg></a></h3>
 <p>Use <code>s20 add</code> when specifying custom durations, start times, past dates, or notes:</p>
-<pre><code class="bash"><span class="hl-1">s20</span><span class="hl-2"> </span><span class="hl-3">add</span><span class="hl-2"> </span><span class="hl-3">&quot;Ticket 5260&quot;</span><span class="hl-2"> </span><span class="hl-7">\</span><br/><span class="hl-2">  </span><span class="hl-4">--start</span><span class="hl-2"> </span><span class="hl-3">05:30</span><span class="hl-2"> </span><span class="hl-7">\</span><br/><span class="hl-2">  </span><span class="hl-4">--duration</span><span class="hl-2"> </span><span class="hl-6">2.25</span><span class="hl-2"> </span><span class="hl-7">\</span><br/><span class="hl-2">  </span><span class="hl-4">--done</span><span class="hl-2"> </span><span class="hl-7">\</span><br/><span class="hl-2">  </span><span class="hl-4">--notes</span><span class="hl-2"> </span><span class="hl-3">&quot;Had to wait for permission from bob&quot;</span>
+<pre><code class="bash"><span class="hl-1">s20</span><span class="hl-2"> </span><span class="hl-3">add</span><span class="hl-2"> </span><span class="hl-3">&quot;Ticket 5260&quot;</span><span class="hl-2"> </span><span class="hl-6">\</span><br/><span class="hl-2">  </span><span class="hl-4">--start</span><span class="hl-2"> </span><span class="hl-3">05:30</span><span class="hl-2"> </span><span class="hl-6">\</span><br/><span class="hl-2">  </span><span class="hl-4">--duration</span><span class="hl-2"> </span><span class="hl-7">2.25</span><span class="hl-2"> </span><span class="hl-6">\</span><br/><span class="hl-2">  </span><span class="hl-4">--done</span><span class="hl-2"> </span><span class="hl-6">\</span><br/><span class="hl-2">  </span><span class="hl-4">--notes</span><span class="hl-2"> </span><span class="hl-3">&quot;Had to wait for permission from bob&quot;</span>
 </code><button type="button">Copy</button></pre>
 
 <p>Short aliases are fully supported:</p>
@@ -195,11 +198,16 @@ column in <code>data/tasks.csv</code> remains empty until explicitly completed.<
 </code><button type="button">Copy</button></pre>
 
 <p><strong>Output:</strong></p>
-<pre><code><span class="hl-2">┌───┬────────────┬──────────┬────┬────────┬──────────────────────────┬───────┬─────────────┐</span><br/><span class="hl-2">│   │ </span><span class="hl-5">date</span><span class="hl-2">       │ </span><span class="hl-5">duration</span><span class="hl-2"> │ </span><span class="hl-5">id</span><span class="hl-2"> │ </span><span class="hl-5">isDone</span><span class="hl-2"> │ </span><span class="hl-5">notes</span><span class="hl-2">                    │ </span><span class="hl-5">start</span><span class="hl-2"> │ </span><span class="hl-5">task</span><span class="hl-2">        │</span><br/><span class="hl-2">├───┼────────────┼──────────┼────┼────────┼──────────────────────────┼───────┼─────────────┤</span><br/><span class="hl-2">│ </span><span class="hl-6">0</span><span class="hl-2"> │ </span><span class="hl-6">2026</span><span class="hl-2">-</span><span class="hl-6">10</span><span class="hl-2">-</span><span class="hl-6">03</span><span class="hl-2"> │ </span><span class="hl-6">1</span><span class="hl-2">        │ </span><span class="hl-6">1</span><span class="hl-2">  │ </span><span class="hl-4">false</span><span class="hl-2">  │                          │ </span><span class="hl-6">14</span><span class="hl-2">:</span><span class="hl-6">15</span><span class="hl-2"> │ </span><span class="hl-5">Ticket</span><span class="hl-2"> </span><span class="hl-6">5260</span><span class="hl-2"> │</span><br/><span class="hl-2">│ </span><span class="hl-6">1</span><span class="hl-2"> │ </span><span class="hl-6">2026</span><span class="hl-2">-</span><span class="hl-6">10</span><span class="hl-2">-</span><span class="hl-6">03</span><span class="hl-2"> │ </span><span class="hl-6">2.25</span><span class="hl-2">     │ </span><span class="hl-6">2</span><span class="hl-2">  │ </span><span class="hl-4">true</span><span class="hl-2">   │ </span><span class="hl-5">Had</span><span class="hl-2"> </span><span class="hl-5">to</span><span class="hl-2"> </span><span class="hl-5">wait</span><span class="hl-2"> </span><span class="hl-5">for</span><span class="hl-2"> </span><span class="hl-5">bob</span><span class="hl-2">      │ </span><span class="hl-6">05</span><span class="hl-2">:</span><span class="hl-6">30</span><span class="hl-2"> │ </span><span class="hl-5">Ticket</span><span class="hl-2"> </span><span class="hl-6">5260</span><span class="hl-2"> │</span><br/><span class="hl-2">└───┴────────────┴──────────┴────┴────────┴──────────────────────────┴───────┴─────────────┘</span>
-</code><button>Copy</button></pre>
+<pre><code class="text">┌───┬────────────┬──────────┬────┬────────┬──────────────────────────┬───────┬─────────────┐
+│   │ date       │ duration │ id │ isDone │ notes                    │ start │ task        │
+├───┼────────────┼──────────┼────┼────────┼──────────────────────────┼───────┼─────────────┤
+│ 0 │ 2026-10-03 │ 1        │ 1  │ false  │                          │ 14:15 │ Ticket 5260 │
+│ 1 │ 2026-10-03 │ 2.25     │ 2  │ true   │ Had to wait for bob      │ 05:30 │ Ticket 5260 │
+└───┴────────────┴──────────┴────┴────────┴──────────────────────────┴───────┴─────────────┘
+</code><button type="button">Copy</button></pre>
 
 <p>Limit the number of displayed events:</p>
-<pre><code class="bash"><span class="hl-1">s20</span><span class="hl-2"> </span><span class="hl-3">list</span><span class="hl-2"> </span><span class="hl-4">--limit</span><span class="hl-2"> </span><span class="hl-6">5</span><br/><span class="hl-1">s20</span><span class="hl-2"> </span><span class="hl-3">list</span><span class="hl-2"> </span><span class="hl-4">-l</span><span class="hl-2"> </span><span class="hl-6">25</span>
+<pre><code class="bash"><span class="hl-1">s20</span><span class="hl-2"> </span><span class="hl-3">list</span><span class="hl-2"> </span><span class="hl-4">--limit</span><span class="hl-2"> </span><span class="hl-7">5</span><br/><span class="hl-1">s20</span><span class="hl-2"> </span><span class="hl-3">list</span><span class="hl-2"> </span><span class="hl-4">-l</span><span class="hl-2"> </span><span class="hl-7">25</span>
 </code><button type="button">Copy</button></pre>
 
 <hr>
@@ -437,7 +445,7 @@ dynamically inspects your <code>tasks.csv</code> file and suggests:</p>
 <h2 id="configuration-customization" class="tsd-anchor-link">Configuration &amp; Customization<a href="#configuration-customization" aria-label="Permalink" class="tsd-anchor-icon"><svg viewBox="0 0 24 24" aria-hidden="true"><use href="assets/icons.svg#icon-anchor"></use></svg></a></h2>
 <p>The default configuration factory can be customized with custom paths, rounding increments, and
 category rules:</p>
-<pre><code class="ts"><span class="hl-8">import</span><span class="hl-2"> { </span><span class="hl-5">createDefaultConfig</span><span class="hl-2">, </span><span class="hl-8">type</span><span class="hl-2"> </span><span class="hl-5">S20Config</span><span class="hl-2"> } </span><span class="hl-8">from</span><span class="hl-2"> </span><span class="hl-3">&#39;s20&#39;</span><span class="hl-2">;</span><br/><br/><span class="hl-4">const</span><span class="hl-2"> </span><span class="hl-9">config</span><span class="hl-2">: </span><span class="hl-11">S20Config</span><span class="hl-2"> = </span><span class="hl-1">createDefaultConfig</span><span class="hl-2">();</span><br/><span class="hl-5">config</span><span class="hl-2">.</span><span class="hl-5">roundingIncrement</span><span class="hl-2"> = </span><span class="hl-6">30</span><span class="hl-2">; </span><span class="hl-0">// Round to 30-minute intervals</span><br/><span class="hl-5">config</span><span class="hl-2">.</span><span class="hl-5">roundingDirection</span><span class="hl-2"> = </span><span class="hl-3">&#39;down&#39;</span><span class="hl-2">; </span><span class="hl-0">// Always round backwards</span><br/><span class="hl-5">config</span><span class="hl-2">.</span><span class="hl-5">defaultDuration</span><span class="hl-2"> = </span><span class="hl-3">&#39;30m&#39;</span><span class="hl-2">; </span><span class="hl-0">// Default new events to 30m</span><br/><span class="hl-5">config</span><span class="hl-2">.</span><span class="hl-5">defaultCategory</span><span class="hl-2"> = </span><span class="hl-3">&#39;client-work&#39;</span><span class="hl-2">;</span>
+<pre><code class="ts"><span class="hl-8">import</span><span class="hl-2"> { </span><span class="hl-5">createDefaultConfig</span><span class="hl-2">, </span><span class="hl-8">type</span><span class="hl-2"> </span><span class="hl-5">S20Config</span><span class="hl-2"> } </span><span class="hl-8">from</span><span class="hl-2"> </span><span class="hl-3">&#39;s20&#39;</span><span class="hl-2">;</span><br/><br/><span class="hl-4">const</span><span class="hl-2"> </span><span class="hl-9">config</span><span class="hl-2">: </span><span class="hl-11">S20Config</span><span class="hl-2"> = </span><span class="hl-1">createDefaultConfig</span><span class="hl-2">();</span><br/><span class="hl-5">config</span><span class="hl-2">.</span><span class="hl-5">roundingIncrement</span><span class="hl-2"> = </span><span class="hl-7">30</span><span class="hl-2">; </span><span class="hl-0">// Round to 30-minute intervals</span><br/><span class="hl-5">config</span><span class="hl-2">.</span><span class="hl-5">roundingDirection</span><span class="hl-2"> = </span><span class="hl-3">&#39;down&#39;</span><span class="hl-2">; </span><span class="hl-0">// Always round backwards</span><br/><span class="hl-5">config</span><span class="hl-2">.</span><span class="hl-5">defaultDuration</span><span class="hl-2"> = </span><span class="hl-3">&#39;30m&#39;</span><span class="hl-2">; </span><span class="hl-0">// Default new events to 30m</span><br/><span class="hl-5">config</span><span class="hl-2">.</span><span class="hl-5">defaultCategory</span><span class="hl-2"> = </span><span class="hl-3">&#39;client-work&#39;</span><span class="hl-2">;</span>
 </code><button type="button">Copy</button></pre>
 
 <hr>

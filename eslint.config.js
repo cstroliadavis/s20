@@ -465,7 +465,7 @@ export default tseslint.config(
   js.configs.recommended,
   ...tseslint.configs.recommended,
   {
-    files: ['src/**/*.ts'],
+    files: ['packages/*/src/**/*.ts', 'bin/**/*.ts'],
     languageOptions: {
       parserOptions: {
         projectService: true,

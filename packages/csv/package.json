@@ -1,0 +1,9 @@
+{
+  "name": "@s20/csv",
+  "version": "0.1.0",
+  "description": "Embedded CSV parsing, serialization, and file streaming library for S20",
+  "type": "module",
+  "main": "./src/index.ts",
+  "module": "./src/index.ts",
+  "types": "./src/index.ts"
+}

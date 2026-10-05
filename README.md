@@ -4,10 +4,12 @@
 [![TypeScript](https://img.shields.io/badge/Language-TypeScript-blue?logo=typescript)](https://www.typescriptlang.org/)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 
-A fast, lightweight, and structured CLI time tracking tool built for **Bun** using
-[coliner](file:///Users/christopherstrolia-davis/Library/CloudStorage/GoogleDrive-christopher.stroliadavis@gmail.com/My%20Drive/ag-projects/coliner)
-and
-[csv-lib](file:///Users/christopherstrolia-davis/Library/CloudStorage/GoogleDrive-christopher.stroliadavis@gmail.com/My%20Drive/ag-projects/csv-lib).
+A fast, lightweight, and structured CLI time tracking tool built for **Bun** as a modular monolith
+with dedicated internal workspace packages:
+
+- `@s20/core`: Application domain logic, CSV storage engine, time calculations, and CLI integration.
+- `@s20/cli`: Lightweight CLI command engine, argument tokenizer, and autocompletion subsystem.
+- `@s20/csv`: RFC 4180 CSV parser, serializer, and file streaming library.
 
 S20 tracks work sessions with zero friction, automatically synchronizing chronological events and
 aggregate task summaries across clean, version-controllable CSV files.
@@ -50,7 +52,7 @@ aggregate task summaries across clean, version-controllable CSV files.
   `Break` = 15m, `Meeting` = 30m).
 - **Dynamic Shell Autocompletion**: Autocompletes tasks dynamically from your CSV history,
   prioritizing open/unfinished tasks while accepting any new task name.
-- **RFC 4180 CSV Engine**: Powered by `csv-lib` for reliable escaping, quoting, and row streaming.
+- **RFC 4180 CSV Engine**: Powered by `@s20/csv` for reliable escaping, quoting, and row streaming.
 
 ---
 
@@ -93,7 +95,7 @@ s20 "Ticket 5260"
 
 **Output:**
 
-```
+```text
 Recorded event #1: Ticket 5260 at 14:15
 ```
 
@@ -174,7 +176,7 @@ s20 list
 
 **Output:**
 
-```
+```text
 ┌───┬────────────┬──────────┬────┬────────┬──────────────────────────┬───────┬─────────────┐
 │   │ date       │ duration │ id │ isDone │ notes                    │ start │ task        │
 ├───┼────────────┼──────────┼────┼────────┼──────────────────────────┼───────┼─────────────┤

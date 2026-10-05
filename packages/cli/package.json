@@ -1,0 +1,12 @@
+{
+  "name": "@s20/cli",
+  "version": "0.1.0",
+  "description": "Embedded CLI schema parser and command execution engine for S20",
+  "type": "module",
+  "main": "./src/index.ts",
+  "module": "./src/index.ts",
+  "types": "./src/index.ts",
+  "dependencies": {
+    "yaml": "^2.7.0"
+  }
+}

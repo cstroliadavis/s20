@@ -6,16 +6,19 @@
     "declaration": true,
     "declarationMap": true,
     "sourceMap": true,
-    "outDir": "./dist",
-    "rootDir": "./src",
     "strict": true,
     "noImplicitAny": true,
     "strictNullChecks": true,
     "esModuleInterop": true,
     "skipLibCheck": true,
     "forceConsistentCasingInFileNames": true,
-    "types": ["bun"]
+    "types": ["bun"],
+    "paths": {
+      "@s20/cli": ["./packages/cli/src/index.ts"],
+      "@s20/core": ["./packages/core/src/index.ts"],
+      "@s20/csv": ["./packages/csv/src/index.ts"]
+    }
   },
-  "include": ["src/**/*"],
-  "exclude": ["node_modules", "dist", "**/*.test.ts"]
+  "include": ["packages/*/src/**/*", "bin/**/*", "packages/*/test/**/*"],
+  "exclude": ["node_modules", "**/dist"]
 }

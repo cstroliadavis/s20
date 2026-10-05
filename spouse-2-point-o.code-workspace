@@ -1,13 +1,20 @@
 {
   "folders": [
     {
+      "name": "S20 (Root)",
       "path": ".",
     },
     {
-      "path": "../coliner",
+      "name": "@s20/core",
+      "path": "packages/core",
     },
     {
-      "path": "../csv-lib",
+      "name": "@s20/cli",
+      "path": "packages/cli",
+    },
+    {
+      "name": "@s20/csv",
+      "path": "packages/csv",
     },
   ],
   "settings": {},

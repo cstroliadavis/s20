@@ -7,123 +7,112 @@ guidelines for the **Spouse 2.0 (S20)** time tracking engine and CLI.
 
 ## 1. System Architecture
 
-S20 is built as a modular TypeScript application running natively on the **Bun** runtime. It is
-structured into distinct, decoupled layers:
+S20 is built as a modular monolith running natively on the **Bun** runtime. It is structured into
+independent workspace packages managed under `packages/*`:
 
-```
+```text
 ┌────────────────────────────────────────────────────────┐
 │                   CLI Entry Point                      │
 │                    (bin/s20.ts)                        │
 └──────────────────────────┬─────────────────────────────┘
                            │
 ┌──────────────────────────▼─────────────────────────────┐
-│                 Coliner CLI Engine                     │
-│           (cli.yaml + src/cli.ts)                      │
-│     - Schema validation & parameter coercion           │
-│     - Dynamic tab completion provider injection        │
-│     - Event routing ('event-add', 'event-list')        │
-└──────────────────────────┬─────────────────────────────┘
-                           │
-┌──────────────────────────▼─────────────────────────────┐
-│                  Service Layer                         │
-│               (src/s20-service.ts)                     │
-│     - Input normalization & task default overrides     │
-│     - Coordinate time rounding and calculations        │
-│     - Storage transaction delegation                   │
+│                 @s20/core Workspace                    │
+│                  (packages/core)                       │
+│     - Application service layer & task coordination    │
+│     - Time calculation, duration parsing & rounding    │
+│     - CSV storage engine & task synchronization        │
+│     - CLI integration & dynamic suggestion providers   │
 └──────────────┬───────────────────────────┬─────────────┘
                │                           │
 ┌──────────────▼─────────────┐ ┌───────────▼─────────────┐
-│       Time Utilities       │ │     CSV Storage Engine  │
-│    (src/time-utils.ts)     │ │      (src/storage.ts)   │
-│ - Flexible duration parse  │ │ - Event append & sync   │
-│ - Start/finish calculation │ │ - Task aggregation      │
-│ - 15m step rounding        │ │ - Prioritized ranking   │
-└────────────────────────────┘ └───────────┬─────────────┘
-                                           │
-                               ┌───────────▼─────────────┐
-                               │         csv-lib         │
-                               │ - RFC 4180 CSV engine   │
-                               │ - Typed row conversions │
-                               └─────────────────────────┘
+│      @s20/cli Workspace    │ │     @s20/csv Workspace  │
+│       (packages/cli)       │ │      (packages/csv)     │
+│ - Schema-driven CLI engine │ │ - RFC 4180 CSV parser   │
+│ - Argument token parsing   │ │ - CSV stringifier       │
+│ - Parameter coercion       │ │ - File read/write/append│
+│ - Shell tab completions    │ │ - Async row streaming   │
+└────────────────────────────┘ └─────────────────────────┘
 ```
 
 ---
 
 ## 2. Directory Structure
 
-```
+```text
 S20/
 ├── bin/
-│   └── s20.ts                 # CLI executable script (#!/usr/bin/env bun)
-├── cli.yaml                   # Root CLI schema definition for Coliner
+│   └── s20.ts                 # CLI entry point script importing @s20/core
 ├── data/                      # Default directory for persistent CSV files
 │   ├── events.csv             # Chronological event log
 │   └── tasks.csv              # Aggregate task registry
 ├── docs/                      # Generated TypeDoc HTML reference documentation
-├── src/
-│   ├── cli.ts                 # CLI binding, dynamic providers & event handlers
-│   ├── cli.yaml               # Bundled CLI schema definition
-│   ├── config.ts              # Configuration interface, defaults & factory
-│   ├── index.ts               # Public library exports
-│   ├── s20-service.ts         # Application service orchestrating operations
-│   ├── storage.ts             # CSV storage engine and task synchronization
-│   ├── time-utils.ts          # Duration parsing, time rounding & calculation
-│   └── types.ts               # Core domain types and CSV column schemas
-├── test/
-│   ├── cli.test.ts            # CLI execution and flag tests
-│   ├── e2e.test.ts            # Subprocess end-to-end and completion tests
-│   ├── s20-service.test.ts    # Service layer unit tests
-│   ├── storage.test.ts        # Storage engine and synchronization tests
-│   └── time-utils.test.ts     # Time calculation and parsing tests
-├── package.json               # Scripts, dependencies, and metadata
-├── tsconfig.json              # TypeScript compiler configuration
+├── packages/
+│   ├── cli/                   # @s20/cli: Coliner command engine & argument parser
+│   │   ├── src/
+│   │   │   ├── arg-parser.ts  # Token scanning, argument matching & flag resolution
+│   │   │   ├── coliner.ts     # Coliner instance factory & execution pipeline
+│   │   │   ├── config-loader.ts # YAML schema loader & validator
+│   │   │   ├── help-formatter.ts # Console help generation
+│   │   │   ├── index.ts       # Public exports for @s20/cli
+│   │   │   └── types.ts       # CLI configuration interfaces & definitions
+│   │   ├── test/
+│   │   └── package.json       # @s20/cli package definition
+│   ├── core/                  # @s20/core: S20 domain logic, storage & service
+│   │   ├── cli.yaml           # YAML CLI schema definition for S20
+│   │   ├── src/
+│   │   │   ├── cli.ts         # CLI binding, dynamic providers & event handlers
+│   │   │   ├── config.ts      # Configuration interface, defaults & factory
+│   │   │   ├── index.ts       # Public library exports for @s20/core
+│   │   │   ├── s20-service.ts # Application service orchestrating operations
+│   │   │   ├── storage.ts     # CSV storage engine and task synchronization
+│   │   │   ├── time-utils.ts  # Duration parsing, time rounding & calculation
+│   │   │   └── types.ts       # Core domain types and CSV column schemas
+│   │   ├── test/
+│   │   └── package.json       # @s20/core package definition
+│   └── csv/                   # @s20/csv: RFC 4180 CSV parser and file I/O
+│       ├── src/
+│       │   ├── file.ts        # High-level readCsvFile, writeCsvFile, appendCsvFile
+│       │   ├── parser.ts      # Chunk and stream CSV parsing
+│       │   ├── stringifier.ts # Row and record formatting & quoting
+│       │   ├── index.ts       # Public exports for @s20/csv
+│       │   └── types.ts       # CSV options, records, and row schemas
+│       ├── test/
+│       └── package.json       # @s20/csv package definition
+├── package.json               # Monorepo workspaces, scripts, and devDependencies
+├── tsconfig.json              # TypeScript compiler configuration with path aliases
 ├── typedoc.json               # TypeDoc API documentation configuration
 └── eslint.config.js           # ESLint flat configuration
 ```
 
 ---
 
-## 3. Module Responsibilities
+## 3. Workspace Responsibilities
 
-### `src/cli.ts`
+### `@s20/core` (`packages/core`)
 
-- Loads the YAML schema using Coliner's `createConfigLoader()`.
-- Dynamically injects the `task` parameter autocomplete provider (`service.getTaskSuggestions()`).
-- Binds Coliner listeners to application actions:
-  - `event-add`: Coerces parameters, invokes `service.recordEvent()`, and logs summary output.
-  - `event-list`: Retrieves recent entries via `service.listEvents()` and logs a formatted table.
+- **`cli.ts`**: Loads `cli.yaml` via `@s20/cli`, injects dynamic task autocompletions from the
+  application service, and maps `event-add` and `event-list` commands to service operations.
+- **`s20-service.ts`**: Coordinates time calculations, applies task-specific default durations (e.g.
+  `Lunch` -> 1h, `Break` -> 15m), and delegates persistence to `storage.ts`.
+- **`storage.ts`**: Interacts with CSV files via `@s20/csv`, manages ID increments, accumulates
+  total task durations, and ranks task suggestions with open tasks prioritized first.
+- **`time-utils.ts`**: Parses durations (`15m`, `30m`, `1h`, `1.5h`, `90m`, `2.25`) into decimal
+  hours, subtracts durations from the current time to compute default start times, and rounds to
+  15-minute increments.
+- **`config.ts`**: Provides application defaults and resolves file storage locations.
 
-### `src/s20-service.ts`
+### `@s20/cli` (`packages/cli`)
 
-- Serves as the central coordination boundary.
-- Resolves task-specific defaults (e.g. `Break` -> 15m, `Lunch` -> 1h).
-- Calculates start time using `time-utils` if omitted.
-- Defaults `isDone` to `false` when `--done` is not passed.
-- Delegates data persistence and query retrieval to `storage.ts`.
+- Recreates the command-line parsing and event execution subsystem derived from Coliner.
+- Handles YAML configuration loading, positional arguments, short and long flags, boolean negators
+  (`--no-done`), time and type coercers, and shell completion scripts.
 
-### `src/storage.ts`
+### `@s20/csv` (`packages/csv`)
 
-- Manages reading, writing, and appending rows via `csv-lib`.
-- Handles incremental ID generation for both events and tasks.
-- Synchronizes task state:
-  - When an event is recorded for a new task, a task entry is created in `tasks.csv`.
-  - When an event is logged for an existing task, cumulative `total time` is increased.
-  - If `isDone: true`, the task's `finished` timestamp is updated.
-  - If `isDone: false`, the task's `finished` field remains empty.
-- Provides `getTaskSuggestions()` with unfinished tasks ranked before finished tasks.
-
-### `src/time-utils.ts`
-
-- Parses durations from strings (`15m`, `30m`, `1h`, `1.5h`, `90m`, `2.25`) into decimal hours.
-- Rounds start time backwards from the current time (`now - duration`) to the nearest 15-minute
-  increment (configurable to `nearest`, `up`, or `down`).
-- Computes task finish times (`startTime + duration`).
-- Normalizes times across 24-hour boundaries.
-
-### `src/config.ts`
-
-- Provides configuration defaults and resolves data directory paths.
-- Holds task default duration lookup tables.
+- Recreates RFC 4180 compliant CSV parsing, serialization, and file streaming derived from csv-lib.
+- Provides `readCsvFile`, `writeCsvFile`, and `appendCsvFile` with automatic header management,
+  delimiters, and quotes escaping.
 
 ---
 
@@ -136,7 +125,8 @@ S20/
    - Schema: `id, date, start, duration, task, is done, notes`.
 2. **Tasks (`data/tasks.csv`)**:
    - Aggregate projection summarizing the state of each distinct task name.
-   - Schema: `id, task, details, started, finished, total time, priority, urgency, importance, category, metadata, config`.
+   - Schema: `id, task, details, started, finished, total time`,
+     `priority, urgency, importance, category, metadata, config`.
 
 ### Synchronization Algorithm
 
