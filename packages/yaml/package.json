@@ -1,0 +1,9 @@
+{
+  "name": "@s20/yaml",
+  "version": "0.1.0",
+  "description": "Embedded YAML parser and serializer for S20 CLI configurations",
+  "type": "module",
+  "main": "./src/index.ts",
+  "module": "./src/index.ts",
+  "types": "./src/index.ts"
+}

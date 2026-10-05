@@ -12,6 +12,8 @@ Documentation is generated and published in both Markdown and HTML formats:
     argument tokenizer, parameter coercion, and shell autocompletion.
   - **[@s20/csv API](./markdown/csv/src/README.md)**: RFC 4180 CSV parser, serializer, and file
     streaming library.
+  - **[@s20/yaml API](./markdown/yaml/src/README.md)**: Embedded YAML parser and serializer for S20
+    CLI configurations.
 - **[HTML Documentation](./html/index.html)**: Interactive, searchable HTML documentation generated
   via TypeDoc.
 

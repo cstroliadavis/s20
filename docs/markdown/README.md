@@ -14,6 +14,7 @@ with dedicated internal workspace packages:
 - `@s20/core`: Application domain logic, CSV storage engine, time calculations, and CLI integration.
 - `@s20/cli`: Lightweight CLI command engine, argument tokenizer, and autocompletion subsystem.
 - `@s20/csv`: RFC 4180 CSV parser, serializer, and file streaming library.
+- `@s20/yaml`: Zero-dependency YAML parser and serializer for CLI schemas.
 
 S20 tracks work sessions with zero friction, automatically synchronizing chronological events and
 aggregate task summaries across clean, version-controllable CSV files.
@@ -57,6 +58,7 @@ aggregate task summaries across clean, version-controllable CSV files.
 - **Dynamic Shell Autocompletion**: Autocompletes tasks dynamically from your CSV history,
   prioritizing open/unfinished tasks while accepting any new task name.
 - **RFC 4180 CSV Engine**: Powered by `@s20/csv` for reliable escaping, quoting, and row streaming.
+- **Zero-Dependency YAML Engine**: Powered by `@s20/yaml` for parsing CLI schema definitions.
 
 ---
 

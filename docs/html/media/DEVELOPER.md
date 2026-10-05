@@ -32,7 +32,16 @@ independent workspace packages managed under `packages/*`:
 │ - Argument token parsing   │ │ - CSV stringifier       │
 │ - Parameter coercion       │ │ - File read/write/append│
 │ - Shell tab completions    │ │ - Async row streaming   │
-└────────────────────────────┘ └─────────────────────────┘
+└──────────────┬─────────────┘ └─────────────────────────┘
+               │
+┌──────────────▼─────────────┐
+│     @s20/yaml Workspace    │
+│       (packages/yaml)      │
+│ - Zero-dependency YAML     │
+│ - Block/flow scalar parser │
+│ - Maps, sequences, chomping│
+│ - YAML serializer          │
+└────────────────────────────┘
 ```
 
 ---
@@ -73,15 +82,29 @@ S20/
 │   │   │   └── types.ts       # Core domain types and CSV column schemas
 │   │   ├── test/
 │   │   └── package.json       # @s20/core package definition
-│   └── csv/                   # @s20/csv: RFC 4180 CSV parser and file I/O
+│   ├── csv/                   # @s20/csv: RFC 4180 CSV parser and file I/O
+│   │   ├── src/
+│   │   │   ├── file.ts        # High-level readCsvFile, writeCsvFile, appendCsvFile
+│   │   │   ├── parser.ts      # Chunk and stream CSV parsing
+│   │   │   ├── stringifier.ts # Row and record formatting & quoting
+│   │   │   ├── index.ts       # Public exports for @s20/csv
+│   │   │   └── types.ts       # CSV options, records, and row schemas
+│   │   ├── test/
+│   │   └── package.json       # @s20/csv package definition
+│   └── yaml/                  # @s20/yaml: Zero-dependency YAML parser and stringifier
 │       ├── src/
-│       │   ├── file.ts        # High-level readCsvFile, writeCsvFile, appendCsvFile
-│       │   ├── parser.ts      # Chunk and stream CSV parsing
-│       │   ├── stringifier.ts # Row and record formatting & quoting
-│       │   ├── index.ts       # Public exports for @s20/csv
-│       │   └── types.ts       # CSV options, records, and row schemas
+│       │   ├── block-scalar.ts # Multiline block scalar (| and >) parsing
+│       │   ├── index.ts       # Public exports for @s20/yaml
+│       │   ├── interfaces.types.ts # Parser and stringifier interfaces
+│       │   ├── key-detector.ts # Key delimiter and quote boundary detection
+│       │   ├── line-scanner.ts # Line indentation and comment stripping
+│       │   ├── options.types.ts # Parser and stringifier options
+│       │   ├── parser.ts      # Recursive YAML document parser
+│       │   ├── scalar-parser.ts # Primitives, quoted strings & flow collections
+│       │   ├── stringifier.ts # YAML serialization with smart quoting
+│       │   └── types.ts       # Central re-exports
 │       ├── test/
-│       └── package.json       # @s20/csv package definition
+│       └── package.json       # @s20/yaml package definition
 ├── package.json               # Monorepo workspaces, scripts, and devDependencies
 ├── tsconfig.json              # TypeScript compiler configuration with path aliases
 ├── typedoc.json               # TypeDoc API documentation configuration
@@ -116,6 +139,16 @@ S20/
 - Recreates RFC 4180 compliant CSV parsing, serialization, and file streaming derived from csv-lib.
 - Provides `readCsvFile`, `writeCsvFile`, and `appendCsvFile` with automatic header management,
   delimiters, and quotes escaping.
+
+### `@s20/yaml` (`packages/yaml`)
+
+- Recreates zero-dependency YAML parsing and stringification tailored for CLI configurations and
+  application schemas.
+- Parses block mappings, nested sequences (`- item` and inline `- key: val`), literal (`|`) and
+  folded (`>`) multiline block scalars with chomping (`+`, `-`), inline flow collections
+  (`[...]`, `{...}`), comments, and primitives.
+- Provides `parseYaml` and `stringifyYaml` functional interfaces alongside factory functions
+  `createYamlParser` and `createYamlStringifier`.
 
 ---
 
@@ -180,6 +213,8 @@ API reference documentation is maintained in both Markdown and HTML formats:
     autocompletions.
   - **[@s20/csv API](docs/markdown/csv/src/README.md)**: RFC 4180 CSV parsing, stringifying, and
     streaming.
+  - **[@s20/yaml API](docs/markdown/yaml/src/README.md)**: Zero-dependency YAML parsing, block
+    scalar processing, and serialization.
 - **[HTML Documentation (docs/html/index.html)](docs/html/index.html)**: Interactive, searchable HTML
   generated via TypeDoc.
 

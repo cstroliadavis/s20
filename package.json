@@ -36,7 +36,7 @@
     "@s20/cli": "workspace:*",
     "@s20/core": "workspace:*",
     "@s20/csv": "workspace:*",
-    "yaml": "^2.7.0"
+    "@s20/yaml": "workspace:*"
   },
   "devDependencies": {
     "@eslint/js": "^10.0.1",

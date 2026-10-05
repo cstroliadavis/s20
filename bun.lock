@@ -8,7 +8,7 @@
         "@s20/cli": "workspace:*",
         "@s20/core": "workspace:*",
         "@s20/csv": "workspace:*",
-        "yaml": "^2.7.0",
+        "@s20/yaml": "workspace:*",
       },
       "devDependencies": {
         "@eslint/js": "^10.0.1",
@@ -28,7 +28,7 @@
       "name": "@s20/cli",
       "version": "0.1.0",
       "dependencies": {
-        "yaml": "^2.7.0",
+        "@s20/yaml": "workspace:*",
       },
     },
     "packages/core": {
@@ -41,6 +41,10 @@
     },
     "packages/csv": {
       "name": "@s20/csv",
+      "version": "0.1.0",
+    },
+    "packages/yaml": {
+      "name": "@s20/yaml",
       "version": "0.1.0",
     },
   },
@@ -86,6 +90,8 @@
     "@s20/core": ["@s20/core@workspace:packages/core"],
 
     "@s20/csv": ["@s20/csv@workspace:packages/csv"],
+
+    "@s20/yaml": ["@s20/yaml@workspace:packages/yaml"],
 
     "@shikijs/engine-oniguruma": ["@shikijs/engine-oniguruma@3.23.0", "", { "dependencies": { "@shikijs/types": "3.23.0", "@shikijs/vscode-textmate": "^10.0.2" } }, "sha512-1nWINwKXxKKLqPibT5f4pAFLej9oZzQTsby8942OTlsJzOBZ0MWKiwzMsd+jhzu8YPCHAswGnnN1YtQfirL35g=="],
 

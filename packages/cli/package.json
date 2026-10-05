@@ -7,6 +7,6 @@
   "module": "./src/index.ts",
   "types": "./src/index.ts",
   "dependencies": {
-    "yaml": "^2.7.0"
+    "@s20/yaml": "workspace:*"
   }
 }

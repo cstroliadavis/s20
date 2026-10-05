@@ -1,7 +1,6 @@
 import fs from 'node:fs';
 import path from 'node:path';
-import process from 'node:process';
-import YAML from 'yaml';
+import { parseYaml } from '@s20/yaml';
 import type { CliConfig, CommandConfig, ParamConfig, ParamItems, ParamType } from './types.js';
 
 const VALID_PARAM_TYPES: ParamType[] = [
@@ -251,7 +250,7 @@ export function createConfigLoader(defaultCwd: string = process.cwd()) {
     let parsed: unknown;
 
     try {
-      parsed = YAML.parse(content);
+      parsed = parseYaml(content);
     } catch (yamlErr) {
       try {
         parsed = JSON.parse(content);

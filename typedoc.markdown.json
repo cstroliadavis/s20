@@ -6,7 +6,8 @@
   "entryPoints": [
     "packages/core/src/index.ts",
     "packages/cli/src/index.ts",
-    "packages/csv/src/index.ts"
+    "packages/csv/src/index.ts",
+    "packages/yaml/src/index.ts"
   ],
   "includeVersion": true,
   "name": "s20",
