@@ -1,6 +1,6 @@
 #!/usr/bin/env bun
 import process from 'node:process';
-import { createDefaultConfig, createS20Cli, createS20Service, createStorage } from '@s20/core';
+import { createDefaultConfig, createS20Cli, createS20Service, createStorage } from '@s20/app';
 
 const config = createDefaultConfig();
 const storage = createStorage(config);

@@ -17,8 +17,8 @@ independent workspace packages managed under `packages/*`:
 └──────────────────────────┬─────────────────────────────┘
                            │
 ┌──────────────────────────▼─────────────────────────────┐
-│                 @s20/core Workspace                    │
-│                  (packages/core)                       │
+│                 @s20/app Workspace                     │
+│                  (packages/app)                        │
 │     - Application service layer & task coordination    │
 │     - Time calculation, duration parsing & rounding    │
 │     - CSV storage engine & task synchronization        │
@@ -51,7 +51,7 @@ independent workspace packages managed under `packages/*`:
 ```text
 S20/
 ├── bin/
-│   └── s20.ts                 # CLI entry point script importing @s20/core
+│   └── s20.ts                 # CLI entry point script importing @s20/app
 ├── data/                      # Default directory for persistent CSV files
 │   ├── events.csv             # Chronological event log
 │   └── tasks.csv              # Aggregate task registry
@@ -60,6 +60,18 @@ S20/
 │   ├── markdown/              # Native GitHub Markdown API reference
 │   └── README.md              # Documentation index & navigation
 ├── packages/
+│   ├── app/                   # @s20/app: S20 domain logic, storage & service
+│   │   ├── cli.yaml           # YAML CLI schema definition for S20
+│   │   ├── src/
+│   │   │   ├── cli.ts         # CLI binding, dynamic providers & event handlers
+│   │   │   ├── config.ts      # Configuration interface, defaults & factory
+│   │   │   ├── index.ts       # Public library exports for @s20/app
+│   │   │   ├── s20-service.ts # Application service orchestrating operations
+│   │   │   ├── storage.ts     # CSV storage engine and task synchronization
+│   │   │   ├── time-utils.ts  # Duration parsing, time rounding & calculation
+│   │   │   └── types.ts       # Core domain types and CSV column schemas
+│   │   ├── test/
+│   │   └── package.json       # @s20/app package definition
 │   ├── cli/                   # @s20/cli: Command-line engine & argument parser
 │   │   ├── src/
 │   │   │   ├── arg-parser.ts  # Token scanning, argument matching & flag resolution
@@ -70,18 +82,6 @@ S20/
 │   │   │   └── types.ts       # CLI configuration interfaces & definitions
 │   │   ├── test/
 │   │   └── package.json       # @s20/cli package definition
-│   ├── core/                  # @s20/core: S20 domain logic, storage & service
-│   │   ├── cli.yaml           # YAML CLI schema definition for S20
-│   │   ├── src/
-│   │   │   ├── cli.ts         # CLI binding, dynamic providers & event handlers
-│   │   │   ├── config.ts      # Configuration interface, defaults & factory
-│   │   │   ├── index.ts       # Public library exports for @s20/core
-│   │   │   ├── s20-service.ts # Application service orchestrating operations
-│   │   │   ├── storage.ts     # CSV storage engine and task synchronization
-│   │   │   ├── time-utils.ts  # Duration parsing, time rounding & calculation
-│   │   │   └── types.ts       # Core domain types and CSV column schemas
-│   │   ├── test/
-│   │   └── package.json       # @s20/core package definition
 │   ├── csv/                   # @s20/csv: RFC 4180 CSV parser and file I/O
 │   │   ├── src/
 │   │   │   ├── file.ts        # High-level readCsvFile, writeCsvFile, appendCsvFile
@@ -115,7 +115,7 @@ S20/
 
 ## 3. Workspace Responsibilities
 
-### `@s20/core` (`packages/core`)
+### `@s20/app` (`packages/app`)
 
 - **`cli.ts`**: Loads `cli.yaml` via `@s20/cli`, injects dynamic task autocompletions from the
   application service, and maps `event-add` and `event-list` commands to service operations.
@@ -207,7 +207,7 @@ API reference documentation is maintained in both Markdown and HTML formats:
 
 - **[Markdown API Reference (docs/markdown/modules.md)](docs/markdown/modules.md)**: Native
   Markdown documentation browsable directly on GitHub.
-  - **[@s20/core API](docs/markdown/core/src/README.md)**: Domain models, services, storage, and
+  - **[@s20/app API](docs/markdown/app/src/README.md)**: Domain models, services, storage, and
     Temporal time math.
   - **[@s20/cli API](docs/markdown/cli/src/README.md)**: CLI parser, token scanning, coercion, and
     autocompletions.

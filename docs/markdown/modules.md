@@ -6,7 +6,7 @@
 
 ## Modules
 
+- [app/src](app/src/README.md)
 - [cli/src](cli/src/README.md)
-- [core/src](core/src/README.md)
 - [csv/src](csv/src/README.md)
 - [yaml/src](yaml/src/README.md)

@@ -16,8 +16,8 @@
     "forceConsistentCasingInFileNames": true,
     "types": ["bun"],
     "paths": {
+      "@s20/app": ["./packages/app/src/index.ts"],
       "@s20/cli": ["./packages/cli/src/index.ts"],
-      "@s20/core": ["./packages/core/src/index.ts"],
       "@s20/csv": ["./packages/csv/src/index.ts"],
       "@s20/yaml": ["./packages/yaml/src/index.ts"]
     }

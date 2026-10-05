@@ -6,7 +6,7 @@ Documentation is generated and published in both Markdown and HTML formats:
 
 - **[Markdown API Reference](./markdown/modules.md)**: Native GitHub markdown documentation,
   optimized for browsing directly within repository source viewers:
-  - **[@s20/core API](./markdown/core/src/README.md)**: Application service layer, CSV storage engine,
+  - **[@s20/app API](./markdown/app/src/README.md)**: Application service layer, CSV storage engine,
     Temporal time math, duration parsing, and configuration defaults.
   - **[@s20/cli API](./markdown/cli/src/README.md)**: Lightweight schema-driven command engine,
     argument tokenizer, parameter coercion, and shell autocompletion.

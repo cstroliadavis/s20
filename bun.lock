@@ -5,8 +5,8 @@
     "": {
       "name": "s20",
       "dependencies": {
+        "@s20/app": "workspace:*",
         "@s20/cli": "workspace:*",
-        "@s20/core": "workspace:*",
         "@s20/csv": "workspace:*",
         "@s20/yaml": "workspace:*",
       },
@@ -24,19 +24,19 @@
         "typescript-eslint": "^8.71.0",
       },
     },
+    "packages/app": {
+      "name": "@s20/app",
+      "version": "0.1.0",
+      "dependencies": {
+        "@s20/cli": "workspace:*",
+        "@s20/csv": "workspace:*",
+      },
+    },
     "packages/cli": {
       "name": "@s20/cli",
       "version": "0.1.0",
       "dependencies": {
         "@s20/yaml": "workspace:*",
-      },
-    },
-    "packages/core": {
-      "name": "@s20/core",
-      "version": "0.1.0",
-      "dependencies": {
-        "@s20/cli": "workspace:*",
-        "@s20/csv": "workspace:*",
       },
     },
     "packages/csv": {
@@ -85,9 +85,9 @@
 
     "@keyv/serialize": ["@keyv/serialize@1.1.1", "", {}, "sha512-dXn3FZhPv0US+7dtJsIi2R+c7qWYiReoEh5zUntWCf4oSpMNib8FDhSoed6m3QyZdx5hK7iLFkYk3rNxwt8vTA=="],
 
-    "@s20/cli": ["@s20/cli@workspace:packages/cli"],
+    "@s20/app": ["@s20/app@workspace:packages/app"],
 
-    "@s20/core": ["@s20/core@workspace:packages/core"],
+    "@s20/cli": ["@s20/cli@workspace:packages/cli"],
 
     "@s20/csv": ["@s20/csv@workspace:packages/csv"],
 

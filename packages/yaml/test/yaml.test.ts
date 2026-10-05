@@ -230,8 +230,8 @@ notes: >
   });
 
   describe('real-world cli.yaml schema', () => {
-    it('parses the actual packages/core/src/cli.yaml schema identically', () => {
-      const cliYamlPath = path.resolve(import.meta.dirname, '../../core/src/cli.yaml');
+    it('parses the actual packages/app/src/cli.yaml schema identically', () => {
+      const cliYamlPath = path.resolve(import.meta.dirname, '../../app/src/cli.yaml');
       const content = fs.readFileSync(cliYamlPath, 'utf-8');
       const parsed = parseYaml<{
         commands: { name: string; params: { name: string; type: string }[] }[];

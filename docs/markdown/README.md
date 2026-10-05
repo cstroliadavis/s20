@@ -11,7 +11,7 @@
 A fast, lightweight, and structured CLI time tracking tool built for **Bun** as a modular monolith
 with dedicated internal workspace packages:
 
-- `@s20/core`: Application domain logic, CSV storage engine, time calculations, and CLI integration.
+- `@s20/app`: Application domain logic, CSV storage engine, time calculations, and CLI integration.
 - `@s20/cli`: Lightweight CLI command engine, argument tokenizer, and autocompletion subsystem.
 - `@s20/csv`: RFC 4180 CSV parser, serializer, and file streaming library.
 - `@s20/yaml`: Zero-dependency YAML parser and serializer for CLI schemas.

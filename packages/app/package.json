@@ -1,0 +1,13 @@
+{
+  "name": "@s20/app",
+  "version": "0.1.0",
+  "description": "S20 time tracking application layer, storage, and service logic",
+  "type": "module",
+  "main": "./src/index.ts",
+  "module": "./src/index.ts",
+  "types": "./src/index.ts",
+  "dependencies": {
+    "@s20/cli": "workspace:*",
+    "@s20/csv": "workspace:*"
+  }
+}
