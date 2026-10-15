@@ -320,6 +320,9 @@ export function createParamCoercer(defaultCwd: string = process.cwd()) {
   };
 }
 
+/**
+ * Context passed to type-specific parameter coercion functions.
+ */
 interface CoerceContext {
   cwd: string;
   param: ParamConfig;

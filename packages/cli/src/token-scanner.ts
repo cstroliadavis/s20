@@ -323,11 +323,17 @@ export function scanTokens(
   return state.positionals;
 }
 
+/**
+ * Result of attempting to parse a single CLI token.
+ */
 interface TokenParseResult {
   consumedNext: boolean;
   handled: boolean;
 }
 
+/**
+ * Context passed to token handlers during CLI argument scanning.
+ */
 interface TokenContext {
   assigned: Map<ParamConfig, unknown>;
   lookups: ParamLookups;
@@ -335,6 +341,9 @@ interface TokenContext {
   token: string;
 }
 
+/**
+ * Mutable scanner state across raw CLI arguments.
+ */
 interface ScanState {
   assigned: Map<ParamConfig, unknown>;
   i: number;

@@ -282,6 +282,9 @@ export function stringifyYaml(data: unknown, options: YamlStringifyOptions = {})
   return stringifier.stringify(data);
 }
 
+/**
+ * Context tracking indentation level and options during YAML serialization.
+ */
 interface StringifyContext {
   readonly indentLevel: number;
   readonly options: YamlStringifyOptions;

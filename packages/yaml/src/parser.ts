@@ -339,11 +339,17 @@ export function parseYaml<T = unknown>(content: string, options: YamlParserOptio
   return parser.parse<T>(content);
 }
 
+/**
+ * Parsed key and raw value portion of a YAML mapping entry.
+ */
 interface KeyValueResult {
   readonly key: string;
   readonly rawValue: string;
 }
 
+/**
+ * Shared parser context across YAML lines and recursion depth.
+ */
 interface ParseContext {
   index: number;
   readonly lines: YamlLine[];

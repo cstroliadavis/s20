@@ -1,21 +1,87 @@
 import type { CsvParserOptions, CsvRecord, CsvRow } from './types.js';
 
+/**
+ * Mutable state container used by the streaming CSV parser across chunks.
+ */
 export interface ParserState {
+  /**
+   * Active column header names for mapping rows into record objects, or `null` when emitting arrays.
+   */
   columnHeaders: string[] | null;
+
+  /**
+   * Accumulated characters for the cell currently being scanned.
+   */
   currentField: string;
+
+  /**
+   * Accumulated cell strings for the row currently being scanned.
+   */
   currentRow: string[];
+
+  /**
+   * Single-character field delimiter.
+   */
   delimiter: string;
+
+  /**
+   * Single-character escape character for quoted fields.
+   */
   escape: string;
+
+  /**
+   * Whether the first input chunk has already been normalized for UTF-8 BOM.
+   */
   hasProcessedFirstChunk: boolean;
+
+  /**
+   * Whether the scanner is currently inside an enclosed quoted field.
+   */
   inQuotes: boolean;
+
+  /**
+   * Whether the scanner is positioned at the very start of a new field.
+   */
   isFieldStart: boolean;
+
+  /**
+   * Whether the current field began with an opening quote character.
+   */
   isQuotedField: boolean;
+
+  /**
+   * Completed rows or records buffered for emission on the current write or end call.
+   */
   outputRows: (CsvRow | CsvRecord)[];
+
+  /**
+   * Single-character quote character used to enclose fields.
+   */
   quote: string;
+
+  /**
+   * Whether the immediately preceding character was a carriage return (`\r`).
+   */
   sawCarriageReturn: boolean;
+
+  /**
+   * Whether the immediately preceding character inside a quoted field was a quote character.
+   */
   sawQuote: boolean;
+
+  /**
+   * Whether completely empty lines should be omitted from output.
+   */
   skipEmptyLines: boolean;
+
+  /**
+   * Whether leading and trailing whitespace should be trimmed from unquoted fields.
+   */
   trim: boolean;
+
+  /**
+   * Whether the first parsed row should be captured as column header names.
+   */
   useHeaderColumns: boolean;
 }
 

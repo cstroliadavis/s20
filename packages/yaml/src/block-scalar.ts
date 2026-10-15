@@ -194,17 +194,26 @@ export function parseBlockScalar(params: ParseBlockScalarParams): BlockScalarRes
   return { nextIndex: index, value };
 }
 
+/**
+ * Result of parsing a YAML block scalar and its next line index.
+ */
 interface BlockScalarResult {
   readonly nextIndex: number;
   readonly value: string;
 }
 
+/**
+ * Internal state accumulated while scanning a YAML block scalar.
+ */
 interface BlockScalarState {
   readonly collected: string[];
   contentIndent: number | undefined;
   readonly parentIndent: number;
 }
 
+/**
+ * Parameters for parsing a multi-line YAML block scalar.
+ */
 interface ParseBlockScalarParams {
   readonly indicator: string;
   readonly lines: YamlLine[];

@@ -147,6 +147,9 @@ export function scanYamlLines(content: string): YamlLine[] {
   return rawLines.map(toYamlLine);
 }
 
+/**
+ * Tracks active single-quote and double-quote state while scanning a YAML line.
+ */
 interface QuoteState {
   inDouble: boolean;
   inSingle: boolean;

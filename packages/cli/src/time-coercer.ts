@@ -1,5 +1,8 @@
 const TIME_REGEX = /^(\d{1,2}):(\d{2})\s*(am|pm)?$/i;
 
+/**
+ * Parsed raw hours, minutes, and optional meridiem parts from a time string.
+ */
 interface RawTimeParts {
   hours: number;
   meridiem?: string;

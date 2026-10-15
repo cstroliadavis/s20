@@ -1,5 +1,8 @@
 import type { CsvStringifier, CsvStringifierOptions, CsvValue } from './types.js';
 
+/**
+ * Internal resolved configuration and header tracking state for a CSV stringifier.
+ */
 interface StringifierConfig {
   columns: string[] | null;
   delimiter: string;

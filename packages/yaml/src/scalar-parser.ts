@@ -269,6 +269,9 @@ export function parseScalar(text: string): unknown {
   return trimmed;
 }
 
+/**
+ * Mutable state while splitting items inside a YAML flow sequence or mapping.
+ */
 interface FlowItemState {
   current: string;
   depth: number;

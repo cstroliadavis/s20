@@ -2,15 +2,24 @@ import process from 'node:process';
 import { promptSelect } from './select-prompt.js';
 import type { ParamConfig, ParamItems, ParsedCommandResult } from './types.js';
 
+/**
+ * Terminal input and output streams used during interactive select prompting.
+ */
 interface PromptStreams {
   input?: NodeJS.ReadableStream & { setRawMode?: (mode: boolean) => void };
   output?: NodeJS.WritableStream;
 }
 
+/**
+ * Parameter coercer contract used after interactive prompt selection.
+ */
 interface CoercerLike {
   coerce: (param: ParamConfig, raw: unknown) => unknown;
 }
 
+/**
+ * Context for filling missing select parameters interactively.
+ */
 interface PromptContext {
   coercer: CoercerLike;
   params: Record<string, unknown>;

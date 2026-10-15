@@ -10,6 +10,9 @@ import type {
   CsvWriter,
 } from './types.js';
 
+/**
+ * Internal state container for an active streaming CSV writer sink.
+ */
 interface WriterState {
   fileWriter: ReturnType<ReturnType<typeof Bun.file>['writer']> | null;
   isClosed: boolean;

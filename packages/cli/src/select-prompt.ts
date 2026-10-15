@@ -1,10 +1,32 @@
 import process from 'node:process';
 
+/**
+ * Configuration options for an interactive terminal select prompt.
+ */
 export interface SelectPromptOptions {
+  /**
+   * Whether the user can enter a custom value not present in `items`.
+   */
   allowCustom?: boolean;
+
+  /**
+   * Readable terminal input stream.
+   */
   input?: NodeJS.ReadableStream & { setRawMode?: (mode: boolean) => void };
+
+  /**
+   * Selectable option values displayed in the menu.
+   */
   items: (string | number)[];
+
+  /**
+   * Writable terminal output stream.
+   */
   output?: NodeJS.WritableStream;
+
+  /**
+   * Name of the parameter being prompted.
+   */
   paramName: string;
 }
 
@@ -339,6 +361,9 @@ export async function promptSelect(options: SelectPromptOptions): Promise<string
   return runInteractivePrompt(options, streams.input, streams.output);
 }
 
+/**
+ * Internal controller callbacks and state for an interactive select prompt.
+ */
 interface PromptController {
   cleanup: () => void;
   output: NodeJS.WritableStream;
@@ -347,6 +372,9 @@ interface PromptController {
   state: PromptState;
 }
 
+/**
+ * Internal mutable state for an interactive select prompt session.
+ */
 interface PromptState {
   allowCustom?: boolean;
   filter: string;

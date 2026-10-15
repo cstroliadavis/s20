@@ -301,6 +301,9 @@ export function createCliTool(
 /** Alias for createCliTool. */
 export const createCli = createCliTool;
 
+/**
+ * Internal state and collaborators for a CLI tool instance.
+ */
 interface CliToolContext {
   coercer: ReturnType<typeof createParamCoercer>;
   config: CliConfig;
@@ -310,6 +313,9 @@ interface CliToolContext {
   parser: ReturnType<typeof createArgParser>;
 }
 
+/**
+ * Normalized CLI execution arguments and I/O streams.
+ */
 interface NormalizedExecutionOptions {
   args: string[];
   input?: NodeJS.ReadableStream & { setRawMode?: (mode: boolean) => void };
