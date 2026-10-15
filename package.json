@@ -16,14 +16,14 @@
     "docs": "typedoc --options typedoc.json && typedoc --options typedoc.markdown.json",
     "docs:html": "typedoc --options typedoc.json",
     "docs:markdown": "typedoc --options typedoc.markdown.json",
-    "format": "prettier --write .",
-    "format:check": "prettier --check .",
-    "lint": "eslint .",
-    "lint:fix": "eslint --fix .",
+    "format": "bun fmt",
+    "format:check": "bun fmt --check",
+    "lint": "bun lint",
+    "lint:fix": "bun lint --fix",
     "start": "bun run ./bin/s20.ts",
     "test": "bun test",
     "test:watch": "bun test --watch",
-    "typecheck": "tsc --noEmit"
+    "typecheck": "bun check"
   },
   "keywords": [
     "time-tracking",
@@ -36,19 +36,17 @@
     "@s20/app": "workspace:*",
     "@s20/cli": "workspace:*",
     "@s20/csv": "workspace:*",
+    "@s20/logging": "workspace:*",
     "@s20/yaml": "workspace:*"
   },
   "devDependencies": {
-    "@eslint/js": "^10.0.1",
     "@stylistic/eslint-plugin": "^5.10.0",
     "@types/bun": "latest",
     "eslint": "^10.11.0",
-    "eslint-config-prettier": "^10.1.8",
-    "prettier": "^3.9.9",
+    "eslint-plugin-jsdoc": "^62.9.0",
     "temporal-spec": "^1.0.1",
     "typedoc": "^0.28.20",
     "typedoc-plugin-markdown": "^4.13.1",
-    "typescript": "^5.8.2",
-    "typescript-eslint": "^8.71.0"
+    "typescript": "^5.9.3"
   }
 }

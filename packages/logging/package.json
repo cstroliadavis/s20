@@ -1,0 +1,10 @@
+{
+  "name": "@s20/logging",
+  "version": "0.1.0",
+  "description": "Event-driven structured logging and rotating JSONL file plugin for S20",
+  "type": "module",
+  "main": "./src/index.ts",
+  "module": "./src/index.ts",
+  "types": "./src/index.ts"
+}
+

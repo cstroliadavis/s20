@@ -8,6 +8,7 @@
   "types": "./src/index.ts",
   "dependencies": {
     "@s20/cli": "workspace:*",
-    "@s20/csv": "workspace:*"
+    "@s20/csv": "workspace:*",
+    "@s20/logging": "workspace:*"
   }
 }

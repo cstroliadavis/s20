@@ -30,15 +30,19 @@ describe('e2e cli execution', () => {
 
     const eventsPath = path.join(tmpDir, 'data', 'events.csv');
     const tasksPath = path.join(tmpDir, 'data', 'tasks.csv');
+    const logPath = path.join(tmpDir, 'data', 'logs', 's20-0001.jsonl');
 
     expect(fs.existsSync(eventsPath)).toBe(true);
     expect(fs.existsSync(tasksPath)).toBe(true);
+    expect(fs.existsSync(logPath)).toBe(true);
 
     const eventsContent = fs.readFileSync(eventsPath, 'utf-8');
     const tasksContent = fs.readFileSync(tasksPath, 'utf-8');
+    const logContent = fs.readFileSync(logPath, 'utf-8');
 
     expect(eventsContent).toContain('Ticket 5260,false,');
     expect(tasksContent).toMatch(/Ticket 5260,,\d{4}-\d{2}-\d{2} \d{2}:\d{2},,1/);
+    expect(logContent).toContain('"message":"Persisted event record"');
   });
 
   it('runs s20 add with all flags and then lists events', () => {

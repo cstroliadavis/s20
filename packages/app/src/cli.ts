@@ -14,9 +14,12 @@ import {
   createConfigLoader,
   type ParamConfig,
 } from '@s20/cli';
+import { logger } from '@s20/logging';
 import type { S20Config } from './config.js';
 import type { createS20Service } from './s20-service.js';
 import type { createStorage } from './storage.js';
+
+const log = logger({ category: 'cli', name: 'cli.ts' });
 
 /**
  * External dependencies required to instantiate and execute the S20 CLI.
@@ -116,6 +119,7 @@ function registerCliHandlers(
     });
     const summary = formatEventSummary(result.id, result.task, result.start);
 
+    log.info('Executed event-add CLI command', { id: result.id, task: result.task });
     console.log(summary);
 
     return summary;
@@ -125,6 +129,8 @@ function registerCliHandlers(
     const events = await service.listEvents();
     const limit = Number(params.limit) || 10;
     const recent = events.slice(-limit);
+
+    log.info('Executed event-list CLI command', { count: recent.length, limit });
 
     if (recent.length === 0) {
       console.log('No events recorded yet.');

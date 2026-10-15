@@ -50,6 +50,22 @@ Path to the events chronological log CSV file.
 
 ***
 
+### logDir
+
+> **logDir**: `string`
+
+Directory path where rotating JSONL application logs are stored.
+
+***
+
+### logMaxRows
+
+> **logMaxRows**: `number`
+
+Maximum number of rows per JSONL log file before rotating to a new file.
+
+***
+
 ### projectFilePath
 
 > **projectFilePath**: `string`

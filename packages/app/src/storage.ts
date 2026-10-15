@@ -7,6 +7,7 @@
  */
 import fs from 'node:fs';
 import { appendCsvFile, readCsvFile, writeCsvFile } from '@s20/csv';
+import { logger } from '@s20/logging';
 import type { S20Config } from './config.js';
 import { calculateFinishTime } from './time-utils.js';
 import {
@@ -18,6 +19,8 @@ import {
 } from './types.js';
 
 export type { EventInput, EventRecord, TaskRecord } from './types.js';
+
+const log = logger({ category: 'storage', name: 'storage.ts' });
 
 /**
  * Appends an event record and synchronizes associated task status.
@@ -45,6 +48,11 @@ async function addEventRecord(event: EventInput, config: S20Config): Promise<Eve
   const tasks = await readTaskRecords(config);
 
   await syncTaskRecord(tasks, event, config);
+  log.info('Persisted event record', {
+    duration: record.duration,
+    id: record.id,
+    task: record.task,
+  });
 
   return record;
 }

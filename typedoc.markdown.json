@@ -7,6 +7,7 @@
     "packages/app/src/index.ts",
     "packages/cli/src/index.ts",
     "packages/csv/src/index.ts",
+    "packages/logging/src/index.ts",
     "packages/yaml/src/index.ts"
   ],
   "includeVersion": true,

@@ -4,6 +4,7 @@
  * Coordinates between user input options, configuration defaults, time utility rounding,
  * and the CSV storage engine. Exposes methods for logging events and querying tasks.
  */
+import { logger } from '@s20/logging';
 import type { S20Config } from './config.js';
 import type { createStorage } from './storage.js';
 import {
@@ -13,6 +14,8 @@ import {
   parseDuration,
 } from './time-utils.js';
 import type { EventInput, EventRecord } from './types.js';
+
+const log = logger({ category: 'service', name: 's20-service.ts' });
 
 /**
  * Input options for adding a new tracking event via the service.
@@ -169,6 +172,12 @@ export function createS20Service(deps: ServiceDependencies) {
    */
   async function recordEvent(options: AddEventOptions): Promise<EventRecord> {
     const payload = buildEventPayload(options, _.config);
+
+    log.info('Recording event', {
+      duration: payload.duration,
+      start: payload.start,
+      task: payload.task,
+    });
 
     return _.storage.addEvent(payload);
   }

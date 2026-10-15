@@ -2,7 +2,10 @@ node_modules
 dist
 .DS_Store
 *.log
+*.jsonl
 data/*.csv
+data/logs/
 **/data/*.csv
+**/data/logs/
 test-data/
 test-*/

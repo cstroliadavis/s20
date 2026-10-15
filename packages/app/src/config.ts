@@ -57,6 +57,16 @@ export interface S20Config {
   eventsFilePath: string;
 
   /**
+   * Directory path where rotating JSONL application logs are stored.
+   */
+  logDir: string;
+
+  /**
+   * Maximum number of rows per JSONL log file before rotating to a new file.
+   */
+  logMaxRows: number;
+
+  /**
    * Path to the project definitions CSV file.
    */
   projectFilePath: string;
@@ -109,6 +119,8 @@ export function createDefaultConfig(baseDir: string = process.cwd()): S20Config 
     defaultCategory: 'work',
     defaultDuration: '1h',
     eventsFilePath: path.join(dataDir, 'events.csv'),
+    logDir: path.join(dataDir, 'logs'),
+    logMaxRows: 5000,
     projectFilePath: path.join(dataDir, 'project.csv'),
     roundingDirection: 'nearest',
     roundingIncrement: 15,

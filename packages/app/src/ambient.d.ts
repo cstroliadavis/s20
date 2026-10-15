@@ -1,6 +1,9 @@
 /// <reference types="temporal-spec/global" />
 
 declare namespace Intl {
+  /**
+   * Formatting options for Intl.DurationFormat.
+   */
   interface DurationFormatOptions {
     days?: 'always' | 'auto' | 'long' | 'narrow' | 'short';
     fractionalDigits?: number;
@@ -13,6 +16,9 @@ declare namespace Intl {
     years?: 'always' | 'auto' | 'long' | 'narrow' | 'short';
   }
 
+  /**
+   * Duration unit values accepted by Intl.DurationFormat.prototype.format.
+   */
   interface DurationInput {
     days?: number;
     hours?: number;
