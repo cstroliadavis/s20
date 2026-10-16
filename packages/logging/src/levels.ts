@@ -35,4 +35,3 @@ export const LOG_LEVEL_VALUES: LogLevelValues = Object.freeze({
 export function isLevelEnabled(configuredLevel: LogLevel, messageLevel: LogLevel): boolean {
   return LOG_LEVEL_VALUES[messageLevel] >= LOG_LEVEL_VALUES[configuredLevel];
 }
-

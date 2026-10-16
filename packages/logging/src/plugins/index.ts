@@ -21,4 +21,3 @@ export const loggerPlugins = Object.freeze({
 });
 
 export default loggerPlugins;
-

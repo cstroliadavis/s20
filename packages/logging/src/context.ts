@@ -144,4 +144,3 @@ export function createContextStore(): ContextStore {
  * Default context store tracking active execution spans across asynchronous calls.
  */
 export const defaultContextStore: ContextStore = createContextStore();
-

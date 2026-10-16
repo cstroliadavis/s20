@@ -113,4 +113,3 @@ describe('@s20/logging jsonlFilePlugin', () => {
     expect(fs.readFileSync(file2, 'utf8').trim().split('\n')).toHaveLength(1);
   });
 });
-

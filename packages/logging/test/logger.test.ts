@@ -112,4 +112,3 @@ describe('@s20/logging core logger', () => {
     expect(received).toEqual(['info:hello', 'log:hello', '*:hello']);
   });
 });
-

@@ -152,4 +152,3 @@ export function createLogFunction(deps: LogFunctionDeps): LogFunction {
 
   return instance;
 }
-

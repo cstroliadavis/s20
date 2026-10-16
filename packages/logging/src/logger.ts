@@ -157,4 +157,3 @@ export const logger: LoggerSingleton = Object.assign(loggerCallable, {
  * or `const log = logger.config(...)` to preserve module context.
  */
 export const log: LogFunction = getOrCreateRootLog();
-

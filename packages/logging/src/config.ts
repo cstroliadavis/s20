@@ -199,4 +199,3 @@ export function createConfigManager(initial?: Partial<LoggerConfig>) {
     updateConfig,
   };
 }
-

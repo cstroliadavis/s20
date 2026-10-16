@@ -678,4 +678,3 @@ export interface LogFunctionDeps {
    */
   page?: PageContext;
 }
-

@@ -16,4 +16,3 @@ import type { LogEvent } from './types.js';
 export function formatAsJson(event: LogEvent): string {
   return JSON.stringify(event);
 }
-
