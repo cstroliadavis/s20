@@ -1,8 +1,8 @@
 /**
- * @file S20 domain data types and CSV column definitions.
+ * @file S20 domain data types and persistence port contracts.
  *
- * Defines TypeScript interfaces for time events and aggregate tasks, along with the canonical
- * column order lists matching the CSV schemas on disk.
+ * Defines platform-agnostic TypeScript interfaces for time events, aggregate tasks,
+ * and the abstract storage repository port implemented by persistence adapters.
  */
 
 /**
@@ -41,7 +41,7 @@ export interface EventInput {
 }
 
 /**
- * Domain representation of a tracked event stored in events.csv.
+ * Domain representation of a tracked event record.
  */
 export interface EventRecord {
   /**
@@ -81,7 +81,42 @@ export interface EventRecord {
 }
 
 /**
- * Domain representation of an aggregate tracked task stored in tasks.csv.
+ * Persistence port contract for reading and persisting S20 events and tasks across any storage backend.
+ */
+export interface S20Storage {
+  /**
+   * Appends a newly created event record to persistent storage.
+   */
+  appendEvent: (event: EventRecord) => Promise<void>;
+
+  /**
+   * Appends a newly created task record to persistent storage.
+   */
+  appendTask: (task: TaskRecord) => Promise<void>;
+
+  /**
+   * Retrieves all chronological event records from storage.
+   */
+  getEvents: () => Promise<EventRecord[]>;
+
+  /**
+   * Retrieves all aggregate task records from storage.
+   */
+  getTasks: () => Promise<TaskRecord[]>;
+
+  /**
+   * Initializes the underlying storage backend if needed.
+   */
+  init: () => Promise<void>;
+
+  /**
+   * Saves the updated collection of aggregate task records to storage.
+   */
+  saveTasks: (tasks: TaskRecord[]) => Promise<void>;
+}
+
+/**
+ * Domain representation of an aggregate tracked task.
  */
 export interface TaskRecord {
   /**
@@ -144,26 +179,3 @@ export interface TaskRecord {
    */
   urgency: string;
 }
-
-/**
- * Canonical column header order for events.csv.
- */
-export const EVENT_COLUMNS = ['id', 'date', 'start', 'duration', 'task', 'is done', 'notes'];
-
-/**
- * Canonical column header order for tasks.csv.
- */
-export const TASK_COLUMNS = [
-  'id',
-  'task',
-  'details',
-  'started',
-  'finished',
-  'total time',
-  'priority',
-  'urgency',
-  'importance',
-  'category',
-  'metadata',
-  'config',
-];

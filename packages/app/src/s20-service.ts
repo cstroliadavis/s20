@@ -2,18 +2,24 @@
  * @file S20 application service layer.
  *
  * Coordinates between user input options, configuration defaults, time utility rounding,
- * and the CSV storage engine. Exposes methods for logging events and querying tasks.
+ * task domain rules, and the abstract S20Storage port. Exposes methods for logging events
+ * and querying tasks across any presentation or persistence layer.
  */
 import { logger } from '@s20/logging';
 import type { S20Config } from './config.js';
-import type { createStorage } from './storage.js';
+import {
+  applyEventToTask,
+  computeNextId,
+  createNewTaskRecord,
+  rankTaskSuggestions,
+} from './task-rules.js';
 import {
   calculateDefaultStartTime,
   getCurrentTimeString,
   getTodayDateString,
   parseDuration,
 } from './time-utils.js';
-import type { EventInput, EventRecord } from './types.js';
+import type { EventInput, EventRecord, S20Storage, TaskRecord } from './types.js';
 
 const log = logger({ category: 'service', name: 's20-service.ts' });
 
@@ -53,22 +59,47 @@ export interface AddEventOptions {
 }
 
 /**
+ * Public contract of the S20 application service.
+ */
+export interface S20Service {
+  /**
+   * Retrieves ranked unique task names with unfinished tasks prioritized first.
+   */
+  getTaskSuggestions: () => Promise<string[]>;
+
+  /**
+   * Lists all chronological event records.
+   */
+  listEvents: () => Promise<EventRecord[]>;
+
+  /**
+   * Lists all aggregate task records.
+   */
+  listTasks: () => Promise<TaskRecord[]>;
+
+  /**
+   * Records a new tracking event and synchronizes the aggregate task state.
+   */
+  recordEvent: (options: AddEventOptions) => Promise<EventRecord>;
+}
+
+/**
  * Service dependencies bundle required to instantiate the S20 service.
  */
 export interface ServiceDependencies {
   /**
-   * Global configuration containing rounding rules, durations, and file paths.
+   * Global configuration containing rounding rules, durations, and category defaults.
    */
   config: S20Config;
 
   /**
-   * CSV storage engine interface for persisting events and synchronizing tasks.
+   * Persistence port implementation for storing and querying events and tasks.
    */
-  storage: ReturnType<typeof createStorage>;
+  storage: S20Storage;
 }
 
 /**
- * Builds normalized EventInput payload ready for CSV persistence.
+ * Builds normalized EventInput payload ready for persistence.
  */
 function buildEventPayload(options: AddEventOptions, config: S20Config): EventInput {
   const duration = resolveDuration(options.task, options.duration, config);
@@ -103,6 +134,28 @@ function getTaskDefaultDuration(task: string, config: S20Config): string {
   if (!taskDef) return config.defaultDuration;
 
   return taskDef.duration ?? config.defaultDuration;
+}
+
+/**
+ * Assigns next incremental ID to event input and appends it to storage.
+ */
+async function persistEventRecord(event: EventInput, storage: S20Storage): Promise<EventRecord> {
+  const existingEvents = await storage.getEvents();
+  const nextId = computeNextId(existingEvents);
+  const record: EventRecord = {
+    id: nextId,
+
+    date: event.date,
+    duration: event.duration,
+    isDone: event.isDone,
+    notes: event.notes,
+    start: event.start,
+    task: event.task,
+  };
+
+  await storage.appendEvent(record);
+
+  return record;
 }
 
 /**
@@ -147,30 +200,57 @@ function resolveStartTime(
 }
 
 /**
- * Creates S20 application service coordinating time calculations and storage.
+ * Synchronizes task state in storage by creating a new task or updating an existing match.
+ */
+async function syncTaskRecord(
+  event: EventInput,
+  config: S20Config,
+  storage: S20Storage,
+): Promise<void> {
+  const tasks = await storage.getTasks();
+  const matchIndex = tasks.findIndex((t) => t.task.toLowerCase() === event.task.toLowerCase());
+
+  if (matchIndex === -1) {
+    const newTask = createNewTaskRecord(event, computeNextId(tasks), config);
+
+    await storage.appendTask(newTask);
+
+    return;
+  }
+
+  const updatedTask = applyEventToTask(tasks[matchIndex], event);
+  const updatedTasks = tasks.with(matchIndex, updatedTask);
+
+  await storage.saveTasks(updatedTasks);
+}
+
+/**
+ * Creates S20 application service coordinating time calculations, task rules, and storage.
  *
- * @param deps Config and storage dependencies
+ * @param deps Config and storage port dependencies
  * @returns Application service instance
  * @example
  * ```ts
  * const config = createDefaultConfig();
- * const storage = createStorage(config);
+ * const storage = createMemoryStorage();
  * const service = createS20Service({ config, storage });
  *
  * const event = await service.recordEvent({ task: 'Ticket 5260' });
- * // Records event in events.csv and updates tasks.csv
+ * // Records event and updates aggregate task via the injected storage port
  * ```
  */
-export function createS20Service(deps: ServiceDependencies) {
+export function createS20Service(deps: ServiceDependencies): S20Service {
   const _ = {
     config: deps.config,
     storage: deps.storage,
   };
 
   /**
-   * Records an event and updates task records.
+   * Records an event and synchronizes aggregate task state.
    */
   async function recordEvent(options: AddEventOptions): Promise<EventRecord> {
+    await _.storage.init();
+
     const payload = buildEventPayload(options, _.config);
 
     log.info('Recording event', {
@@ -179,11 +259,15 @@ export function createS20Service(deps: ServiceDependencies) {
       task: payload.task,
     });
 
-    return _.storage.addEvent(payload);
+    const record = await persistEventRecord(payload, _.storage);
+
+    await syncTaskRecord(payload, _.config, _.storage);
+
+    return record;
   }
 
   return {
-    getTaskSuggestions: () => _.storage.getTaskSuggestions(),
+    getTaskSuggestions: async () => rankTaskSuggestions(await _.storage.getTasks()),
     listEvents: () => _.storage.getEvents(),
     listTasks: () => _.storage.getTasks(),
     recordEvent,

@@ -4,9 +4,11 @@ export { createCli, createCliTool } from './cli-tool.js';
 export { createConfigLoader } from './config-loader.js';
 export { createHelpFormatter } from './help-formatter.js';
 export { createParamCoercer } from './param-coercer.js';
+export { createS20Cli } from './s20-cli.js';
 export { formatCompletionsForShell, generateCompletionScript } from './completion-generator.js';
 export { promptSelect } from './select-prompt.js';
 export { resolveCompletions } from './completion-resolver.js';
+export type { CliDependencies } from './s20-cli.js';
 export type { CoerceOptions } from './param-coercer.js';
 export type { SelectPromptOptions } from './select-prompt.js';
 export type {

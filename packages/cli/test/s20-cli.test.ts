@@ -1,48 +1,24 @@
-import { afterEach, describe, expect, it } from 'bun:test';
-import fs from 'node:fs';
-import path from 'node:path';
-import { createS20Cli } from '../src/cli.js';
-import { createDefaultConfig } from '../src/config.js';
-import { createS20Service } from '../src/s20-service.js';
-import { createStorage } from '../src/storage.js';
+import { describe, expect, it } from 'bun:test';
+import { createDefaultConfig, createMemoryStorage, createS20Service } from '@s20/app';
+import { createS20Cli } from '../src/s20-cli.js';
 
 function setup() {
-  const tmpDir = path.resolve(import.meta.dirname, `../test-cli-${Date.now()}`);
-
-  fs.mkdirSync(tmpDir, { recursive: true });
-
-  const config = createDefaultConfig(tmpDir);
-  const storage = createStorage(config);
+  const config = createDefaultConfig();
+  const storage = createMemoryStorage();
   const service = createS20Service({ config, storage });
-  const cli = createS20Cli({ config, service, storage });
-
-  function cleanup() {
-    if (fs.existsSync(tmpDir)) {
-      fs.rmSync(tmpDir, { force: true, recursive: true });
-    }
-  }
+  const cli = createS20Cli({ service });
 
   return {
-    cleanup,
     cli,
     config,
     service,
     storage,
-    tmpDir,
   };
 }
 
-describe('cli', () => {
-  let env: ReturnType<typeof setup>;
-
-  afterEach(() => {
-    if (env) {
-      env.cleanup();
-    }
-  });
-
+describe('s20-cli', () => {
   it('executes default add command with single positional task argument', async () => {
-    env = setup();
+    const env = setup();
 
     await env.cli.execute(['Ticket 5260']);
 
@@ -56,7 +32,7 @@ describe('cli', () => {
   });
 
   it('marks event as completed when --done flag is provided', async () => {
-    env = setup();
+    const env = setup();
 
     await env.cli.execute(['add', 'Completed Task', '--done']);
 
@@ -69,7 +45,7 @@ describe('cli', () => {
   });
 
   it('executes add command with explicit start, duration, and notes flags', async () => {
-    env = setup();
+    const env = setup();
 
     await env.cli.execute([
       'add',
@@ -89,7 +65,7 @@ describe('cli', () => {
   });
 
   it('supports --no-done negator flag to set isDone to false', async () => {
-    env = setup();
+    const env = setup();
 
     await env.cli.execute(['add', 'Ongoing Task', '--no-done']);
 
@@ -101,7 +77,7 @@ describe('cli', () => {
   });
 
   it('executes list command without errors', async () => {
-    env = setup();
+    const env = setup();
 
     await env.cli.execute(['Ticket 1']);
     await env.cli.execute(['Ticket 2']);

@@ -1,14 +1,12 @@
 {
   "name": "@s20/app",
   "version": "0.1.0",
-  "description": "S20 time tracking application layer, storage, and service logic",
+  "description": "S20 isomorphic domain models, time utilities, storage ports, and application services",
   "type": "module",
   "main": "./src/index.ts",
   "module": "./src/index.ts",
   "types": "./src/index.ts",
   "dependencies": {
-    "@s20/cli": "workspace:*",
-    "@s20/csv": "workspace:*",
     "@s20/logging": "workspace:*"
   }
 }

@@ -20,6 +20,7 @@
       "@s20/cli": ["./packages/cli/src/index.ts"],
       "@s20/csv": ["./packages/csv/src/index.ts"],
       "@s20/logging": ["./packages/logging/src/index.ts"],
+      "@s20/storage": ["./packages/storage/src/index.ts"],
       "@s20/yaml": ["./packages/yaml/src/index.ts"]
     }
   },

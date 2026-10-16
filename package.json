@@ -37,6 +37,7 @@
     "@s20/cli": "workspace:*",
     "@s20/csv": "workspace:*",
     "@s20/logging": "workspace:*",
+    "@s20/storage": "workspace:*",
     "@s20/yaml": "workspace:*"
   },
   "devDependencies": {

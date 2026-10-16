@@ -1,11 +1,9 @@
 /**
- * @file S20 configuration module.
+ * @file S20 isomorphic application configuration module.
  *
- * Defines configuration interfaces, supported rounding directions, default task durations,
- * and the default configuration factory resolving filesystem paths for CSV data stores.
+ * Defines platform-independent configuration interfaces, supported rounding directions,
+ * default task durations, and the default configuration factory free of Node/OS filesystem dependencies.
  */
-import path from 'node:path';
-import process from 'node:process';
 
 /**
  * Supported rounding directions for time rounding calculations.
@@ -28,19 +26,9 @@ export interface TaskDefaultConfig {
 }
 
 /**
- * Global configuration options for S20 time tracking.
+ * Global domain and application configuration options for S20 time tracking.
  */
 export interface S20Config {
-  /**
-   * Path to the category CSV file.
-   */
-  categoryFilePath: string;
-
-  /**
-   * Root directory housing all CSV storage files.
-   */
-  dataDir: string;
-
   /**
    * Default category assigned to new tasks when unconfigured.
    */
@@ -50,26 +38,6 @@ export interface S20Config {
    * Default duration string when none is provided on the command line or in task defaults.
    */
   defaultDuration: string;
-
-  /**
-   * Path to the events chronological log CSV file.
-   */
-  eventsFilePath: string;
-
-  /**
-   * Directory path where rotating JSONL application logs are stored.
-   */
-  logDir: string;
-
-  /**
-   * Maximum number of rows per JSONL log file before rotating to a new file.
-   */
-  logMaxRows: number;
-
-  /**
-   * Path to the project definitions CSV file.
-   */
-  projectFilePath: string;
 
   /**
    * Direction used for rounding start times ('nearest', 'up', or 'down').
@@ -85,11 +53,6 @@ export interface S20Config {
    * Map of task names to specific duration and category overrides.
    */
   taskDefaults: Record<string, TaskDefaultConfig | undefined>;
-
-  /**
-   * Path to the aggregate tasks status CSV file.
-   */
-  tasksFilePath: string;
 }
 
 const DEFAULT_TASK_DEFAULTS: Record<string, TaskDefaultConfig> = {
@@ -100,31 +63,24 @@ const DEFAULT_TASK_DEFAULTS: Record<string, TaskDefaultConfig> = {
 };
 
 /**
- * Creates default configuration instance resolved against base directory.
+ * Creates a platform-agnostic default S20 application configuration with optional overrides.
  *
- * @param baseDir Base root directory for data file resolution
- * @returns Configured S20 options
+ * @param overrides Optional partial configuration values to override defaults
+ * @returns Configured S20 domain options
  * @example
  * ```ts
- * const config = createDefaultConfig('/path/to/project');
- * // Returns config with eventsFilePath resolving to '/path/to/project/data/events.csv'
+ * const config = createDefaultConfig({ roundingIncrement: 30 });
+ * // Returns S20Config with 30-minute rounding increment and preset task defaults
  * ```
  */
-export function createDefaultConfig(baseDir: string = process.cwd()): S20Config {
-  const dataDir = path.resolve(baseDir, 'data');
-
-  return {
-    categoryFilePath: path.join(dataDir, 'category.csv'),
-    dataDir,
+export function createDefaultConfig(overrides?: Partial<S20Config>): S20Config {
+  const defaults: S20Config = {
     defaultCategory: 'work',
     defaultDuration: '1h',
-    eventsFilePath: path.join(dataDir, 'events.csv'),
-    logDir: path.join(dataDir, 'logs'),
-    logMaxRows: 5000,
-    projectFilePath: path.join(dataDir, 'project.csv'),
     roundingDirection: 'nearest',
     roundingIncrement: 15,
     taskDefaults: { ...DEFAULT_TASK_DEFAULTS },
-    tasksFilePath: path.join(dataDir, 'tasks.csv'),
   };
+
+  return { ...defaults, ...overrides };
 }

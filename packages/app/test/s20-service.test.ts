@@ -1,45 +1,23 @@
-import { afterEach, describe, expect, it } from 'bun:test';
-import fs from 'node:fs';
-import path from 'node:path';
+import { describe, expect, it } from 'bun:test';
 import { createDefaultConfig } from '../src/config.js';
+import { createMemoryStorage } from '../src/memory-storage.js';
 import { createS20Service } from '../src/s20-service.js';
-import { createStorage } from '../src/storage.js';
 
 function setup() {
-  const tmpDir = path.resolve(import.meta.dirname, `../test-service-${Date.now()}`);
-
-  fs.mkdirSync(tmpDir, { recursive: true });
-
-  const config = createDefaultConfig(tmpDir);
-  const storage = createStorage(config);
+  const config = createDefaultConfig();
+  const storage = createMemoryStorage();
   const service = createS20Service({ config, storage });
 
-  function cleanup() {
-    if (fs.existsSync(tmpDir)) {
-      fs.rmSync(tmpDir, { force: true, recursive: true });
-    }
-  }
-
   return {
-    cleanup,
     config,
     service,
     storage,
-    tmpDir,
   };
 }
 
 describe('s20-service', () => {
-  let env: ReturnType<typeof setup>;
-
-  afterEach(() => {
-    if (env) {
-      env.cleanup();
-    }
-  });
-
   it('records event with calculated defaults when only task name is provided', async () => {
-    env = setup();
+    const env = setup();
 
     const event = await env.service.recordEvent({ task: 'Ticket 5260' });
     const tasks = await env.service.listTasks();
@@ -55,7 +33,7 @@ describe('s20-service', () => {
   });
 
   it('marks task finished and sets finish timestamp when done is true', async () => {
-    env = setup();
+    const env = setup();
 
     const event = await env.service.recordEvent({ done: true, task: 'Ticket 5260' });
     const tasks = await env.service.listTasks();
@@ -65,7 +43,7 @@ describe('s20-service', () => {
   });
 
   it('records event with explicit start, duration, done status, and notes', async () => {
-    env = setup();
+    const env = setup();
 
     const event = await env.service.recordEvent({
       date: '2026-10-03',
@@ -85,7 +63,7 @@ describe('s20-service', () => {
   });
 
   it('applies task-specific default duration when available in config', async () => {
-    env = setup();
+    const env = setup();
 
     const event = await env.service.recordEvent({ task: 'Break' });
 
@@ -93,8 +71,65 @@ describe('s20-service', () => {
     expect(event.duration).toBe(0.25);
   });
 
+  it('accumulates total time and updates status when adding to existing task', async () => {
+    const env = setup();
+
+    await env.service.recordEvent({
+      date: '2026-10-03',
+      done: true,
+      duration: 1,
+      notes: 'First part',
+      start: '09:00',
+      task: 'Ticket 5260',
+    });
+
+    const secondEvent = await env.service.recordEvent({
+      date: '2026-10-03',
+      done: false,
+      duration: 0.5,
+      notes: 'Follow-up part',
+      start: '10:00',
+      task: 'Ticket 5260',
+    });
+
+    expect(secondEvent.id).toBe(2);
+
+    const tasks = await env.service.listTasks();
+
+    expect(tasks).toHaveLength(1);
+    expect(tasks[0]?.totalTime).toBe(1.5);
+    expect(tasks[0]?.finished).toBe('');
+  });
+
+  it('returns task suggestions with unfinished tasks prioritized first', async () => {
+    const env = setup();
+
+    await env.service.recordEvent({
+      date: '2026-10-03',
+      done: true,
+      duration: 1,
+      notes: '',
+      start: '08:00',
+      task: 'Completed Task',
+    });
+
+    await env.service.recordEvent({
+      date: '2026-10-03',
+      done: false,
+      duration: 1,
+      notes: '',
+      start: '09:00',
+      task: 'Active Task',
+    });
+
+    const suggestions = await env.service.getTaskSuggestions();
+
+    expect(suggestions[0]).toBe('Active Task');
+    expect(suggestions[1]).toBe('Completed Task');
+  });
+
   it('lists recorded events and task records', async () => {
-    env = setup();
+    const env = setup();
 
     await env.service.recordEvent({ task: 'Task 1' });
     await env.service.recordEvent({ task: 'Task 2' });

@@ -1,35 +1,24 @@
 /**
- * @file S20 Command Line Interface (CLI) module.
+ * @file S20 Command Line Interface (CLI) presentation adapter.
  *
- * Integrates the @s20/cli command engine with the S20 application service layer.
+ * Connects the @s20/cli command engine to the @s20/app application service layer.
  * Loads the YAML CLI schema, injects dynamic task completion providers, and
  * maps CLI events ('event-add' and 'event-list') to service operations with terminal output.
  */
 import fs from 'node:fs';
 import path from 'node:path';
-import {
-  type CliConfig,
-  type CommandConfig,
-  createCliTool,
-  createConfigLoader,
-  type ParamConfig,
-} from '@s20/cli';
+import type { S20Service } from '@s20/app';
 import { logger } from '@s20/logging';
-import type { S20Config } from './config.js';
-import type { createS20Service } from './s20-service.js';
-import type { createStorage } from './storage.js';
+import { createCliTool } from './cli-tool.js';
+import { createConfigLoader } from './config-loader.js';
+import type { CliConfig, CliToolInstance, CommandConfig, ParamConfig } from './types.js';
 
-const log = logger({ category: 'cli', name: 'cli.ts' });
+const log = logger({ category: 'cli', name: 's20-cli.ts' });
 
 /**
- * External dependencies required to instantiate and execute the S20 CLI.
+ * External dependencies required to instantiate and execute the S20 CLI presentation adapter.
  */
 export interface CliDependencies {
-  /**
-   * Runtime configuration containing CSV storage file paths and rounding rules.
-   */
-  config: S20Config;
-
   /**
    * Optional custom filesystem path to the YAML CLI schema definition file.
    */
@@ -38,12 +27,7 @@ export interface CliDependencies {
   /**
    * Application service instance coordinating time calculations, storage, and suggestions.
    */
-  service: ReturnType<typeof createS20Service>;
-
-  /**
-   * CSV storage engine instance for direct data inspection and persistence operations.
-   */
-  storage: ReturnType<typeof createStorage>;
+  service: S20Service;
 }
 
 /**
@@ -71,10 +55,7 @@ function formatEventSummary(id: number, task: string, start: string): string {
  * Injects dynamic provider functions into parsed schema parameters so that shell tab completion
  * and interactive prompts can query live task data from the application service.
  */
-function injectDynamicProviders(
-  schema: CliConfig,
-  service: ReturnType<typeof createS20Service>,
-): void {
+function injectDynamicProviders(schema: CliConfig, service: S20Service): void {
   const addCmd = findAddCommand(schema.commands);
   const taskParam = findTaskParam(addCmd);
 
@@ -87,10 +68,7 @@ function injectDynamicProviders(
  * Loads the YAML CLI schema definition from disk using @s20/cli's config loader and injects dynamic
  * task suggestion providers before instantiation.
  */
-function loadCliSchema(
-  configPath: string | undefined,
-  service: ReturnType<typeof createS20Service>,
-): CliConfig {
+function loadCliSchema(configPath: string | undefined, service: S20Service): CliConfig {
   const resolvedPath = resolveSchemaPath(configPath);
   const loader = createConfigLoader();
   const schema = loader.loadFromFile(resolvedPath);
@@ -104,10 +82,7 @@ function loadCliSchema(
  * Registers event listeners on the CLI tool instance for 'event-add' and 'event-list' actions,
  * coordinating service calls and console output formatting.
  */
-function registerCliHandlers(
-  cliTool: ReturnType<typeof createCliTool>,
-  service: ReturnType<typeof createS20Service>,
-): void {
+function registerCliHandlers(cliTool: CliToolInstance, service: S20Service): void {
   cliTool.on('event-add', async ({ params }) => {
     const result = await service.recordEvent({
       date: params.date as Date | string | undefined,
@@ -159,22 +134,22 @@ function resolveSchemaPath(configPath?: string): string {
 }
 
 /**
- * Creates and initializes an S20 Command Line Interface application instance from the YAML schema.
+ * Creates and initializes an S20 Command Line Interface presentation instance from the YAML schema.
  *
- * @param deps Injected CLI dependencies including service, storage, and configuration options
+ * @param deps Injected CLI dependencies including the application service and optional schema path
  * @returns Fully configured CLI tool instance ready for execution and shell completion
  * @example
  * ```ts
  * const config = createDefaultConfig();
- * const storage = createStorage(config);
+ * const storage = createMemoryStorage();
  * const service = createS20Service({ config, storage });
- * const cli = createS20Cli({ config, service, storage });
+ * const cli = createS20Cli({ service });
  *
  * await cli.execute(['Ticket 5260', '--duration=1.5']);
  * // Records an event for 'Ticket 5260' and logs confirmation to console
  * ```
  */
-export function createS20Cli(deps: CliDependencies) {
+export function createS20Cli(deps: CliDependencies): CliToolInstance {
   const schema = loadCliSchema(deps.configPath, deps.service);
   const cliTool = createCliTool({ config: schema });
 

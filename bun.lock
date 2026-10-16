@@ -9,6 +9,7 @@
         "@s20/cli": "workspace:*",
         "@s20/csv": "workspace:*",
         "@s20/logging": "workspace:*",
+        "@s20/storage": "workspace:*",
         "@s20/yaml": "workspace:*",
       },
       "devDependencies": {
@@ -26,8 +27,6 @@
       "name": "@s20/app",
       "version": "0.1.0",
       "dependencies": {
-        "@s20/cli": "workspace:*",
-        "@s20/csv": "workspace:*",
         "@s20/logging": "workspace:*",
       },
     },
@@ -35,6 +34,8 @@
       "name": "@s20/cli",
       "version": "0.1.0",
       "dependencies": {
+        "@s20/app": "workspace:*",
+        "@s20/logging": "workspace:*",
         "@s20/yaml": "workspace:*",
       },
     },
@@ -45,6 +46,15 @@
     "packages/logging": {
       "name": "@s20/logging",
       "version": "0.1.0",
+    },
+    "packages/storage": {
+      "name": "@s20/storage",
+      "version": "0.1.0",
+      "dependencies": {
+        "@s20/app": "workspace:*",
+        "@s20/csv": "workspace:*",
+        "@s20/logging": "workspace:*",
+      },
     },
     "packages/yaml": {
       "name": "@s20/yaml",
@@ -97,6 +107,8 @@
     "@s20/csv": ["@s20/csv@workspace:packages/csv"],
 
     "@s20/logging": ["@s20/logging@workspace:packages/logging"],
+
+    "@s20/storage": ["@s20/storage@workspace:packages/storage"],
 
     "@s20/yaml": ["@s20/yaml@workspace:packages/yaml"],
 

@@ -1,4 +1,10 @@
 export {
+  applyEventToTask,
+  computeNextId,
+  createNewTaskRecord,
+  rankTaskSuggestions,
+} from './task-rules.js';
+export {
   calculateDefaultStartTime,
   calculateFinishTime,
   formatDuration,
@@ -8,11 +14,9 @@ export {
   roundTimeToIncrement,
 } from './time-utils.js';
 export { createDefaultConfig } from './config.js';
-export { createS20Cli } from './cli.js';
+export { createMemoryStorage } from './memory-storage.js';
 export { createS20Service } from './s20-service.js';
-export { createStorage } from './storage.js';
-export type { AddEventOptions, ServiceDependencies } from './s20-service.js';
-export type { CliDependencies } from './cli.js';
-export type { EventInput, EventRecord, TaskRecord } from './types.js';
+export type { AddEventOptions, S20Service, ServiceDependencies } from './s20-service.js';
+export type { EventInput, EventRecord, S20Storage, TaskRecord } from './types.js';
 export type { RoundingDirection, S20Config, TaskDefaultConfig } from './config.js';
 export type { TimeRoundingOptions } from './time-utils.js';
