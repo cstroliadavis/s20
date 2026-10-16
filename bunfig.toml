@@ -52,8 +52,10 @@ plugins = [
 
 # Custom Local AST Rules
 "local/guard-patterns" = ["error", { maxLen = 100 }]
+"local/layer-boundaries" = "error"
 "local/prefer-includes" = "error"
 "local/sort-function-declarations" = "error"
+"local/test-conventions" = "error"
 
 # Stylistic Rules
 "@stylistic/comma-dangle" = ["error", "always-multiline"]
