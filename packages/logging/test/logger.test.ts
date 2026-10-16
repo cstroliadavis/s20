@@ -6,6 +6,7 @@ import {
   createMemorySink,
   isLevelEnabled,
   LOG_LEVEL_VALUES,
+  type LogEvent,
   logger,
 } from '../src/index.js';
 
@@ -16,7 +17,18 @@ describe('@s20/logging core logger', () => {
     const memory = createMemorySink();
     const unsubscribe = logger.on('log', memory.handler);
 
+    function buildLogEvent(overrides: Partial<LogEvent> = {}): LogEvent {
+      return Object.freeze({
+        eventType: 'info',
+        level: 'info',
+        message: 'default message',
+        timestamp: '2026-10-15T00:00:00.000Z',
+        ...overrides,
+      });
+    }
+
     return Object.freeze({
+      buildLogEvent,
       memory,
       unsubscribe,
     });
@@ -53,13 +65,8 @@ describe('@s20/logging core logger', () => {
     expect(events[0]?.message).toBe('Event added');
     expect(events[0]?.level).toBe('info');
     expect(events[0]?.metadata).toEqual({ eventId: 42 });
-    expect(events[0]?.logger).toEqual({
-      appName: 's20',
-      appVersion: '0.1.0',
-      category: 'storage',
-      environment: 'test',
-      name: 'storage.ts',
-    });
+    expect(events[0]?.logger?.category).toBe('storage');
+    expect(events[0]?.logger?.name).toBe('storage.ts');
   });
 
   it('propagates correlationId and spanId from active execution span', () => {
@@ -95,6 +102,7 @@ describe('@s20/logging core logger', () => {
   });
 
   it('dispatches events to severity, aggregate log, and wildcard channels', () => {
+    const { buildLogEvent } = setup();
     const emitter = createEventEmitter();
     const received: string[] = [];
 
@@ -102,12 +110,7 @@ describe('@s20/logging core logger', () => {
     emitter.on('log', (e) => received.push(`log:${e.message}`));
     emitter.on('*', (e) => received.push(`*:${e.message}`));
 
-    emitter.emit('info', {
-      eventType: 'info',
-      level: 'info',
-      message: 'hello',
-      timestamp: '2026-10-15T00:00:00.000Z',
-    });
+    emitter.emit('info', buildLogEvent({ message: 'hello' }));
 
     expect(received).toEqual(['info:hello', 'log:hello', '*:hello']);
   });

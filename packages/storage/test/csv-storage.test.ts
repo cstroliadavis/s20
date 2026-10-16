@@ -1,114 +1,149 @@
 import { afterEach, describe, expect, it } from 'bun:test';
 import fs from 'node:fs';
 import path from 'node:path';
-import { createDefaultConfig, createS20Service } from '@s20/app';
+import { createDefaultConfig, createS20Service, type EventRecord, type TaskRecord } from '@s20/app';
 import { createCsvStorage, createDefaultStoragePaths } from '../src/index.js';
 
-function setupTestEnvironment() {
-  const tmpDir = path.resolve(import.meta.dirname, `../test-data-${Date.now()}`);
+describe('csv-storage', () => {
+  const tempDirs: string[] = [];
 
-  fs.mkdirSync(tmpDir, { recursive: true });
+  function buildEvent(overrides: Partial<EventRecord> = {}): EventRecord {
+    return Object.freeze({
+      id: 1,
 
-  const config = createDefaultConfig();
-  const paths = createDefaultStoragePaths(tmpDir);
-  const storage = createCsvStorage(paths);
-  const service = createS20Service({ config, storage });
-
-  function cleanup() {
-    if (fs.existsSync(tmpDir)) {
-      fs.rmSync(tmpDir, { force: true, recursive: true });
-    }
+      date: '2026-10-03',
+      duration: 1,
+      isDone: false,
+      notes: '',
+      start: '09:00',
+      task: 'Default Task',
+      ...overrides,
+    });
   }
 
-  return {
-    cleanup,
-    config,
-    paths,
-    service,
-    storage,
-    tmpDir,
-  };
-}
+  function buildTask(overrides: Partial<TaskRecord> = {}): TaskRecord {
+    return Object.freeze({
+      id: 1,
 
-describe('csv-storage', () => {
-  let env: ReturnType<typeof setupTestEnvironment>;
+      category: 'work',
+      config: '{}',
+      details: '',
+      finished: '',
+      importance: '',
+      metadata: '{}',
+      priority: '',
+      started: '2026-10-03 09:00',
+      task: 'Default Task',
+      totalTime: 1,
+      urgency: '',
+      ...overrides,
+    });
+  }
+
+  function setup() {
+    const tmpDir = path.resolve(
+      import.meta.dirname,
+      `../test-data-${Date.now()}-${Math.random().toString(36).slice(2)}`,
+    );
+
+    tempDirs.push(tmpDir);
+    fs.mkdirSync(tmpDir, { recursive: true });
+
+    const config = Object.freeze(createDefaultConfig());
+    const paths = Object.freeze(createDefaultStoragePaths(tmpDir));
+    const storage = Object.freeze(createCsvStorage(paths));
+    const service = Object.freeze(createS20Service({ config, storage }));
+
+    return Object.freeze({
+      buildEvent,
+      buildTask,
+      config,
+      paths,
+      service,
+      storage,
+      tmpDir,
+    });
+  }
 
   afterEach(() => {
-    if (env) {
-      env.cleanup();
+    while (tempDirs.length > 0) {
+      const dir = tempDirs.pop();
+
+      if (dir && fs.existsSync(dir)) {
+        fs.rmSync(dir, { force: true, recursive: true });
+      }
     }
   });
 
   it('initializes empty events and tasks files with headers', async () => {
-    env = setupTestEnvironment();
+    const { paths, storage } = setup();
 
-    const events = await env.storage.getEvents();
-    const tasks = await env.storage.getTasks();
+    const events = await storage.getEvents();
+    const tasks = await storage.getTasks();
 
     expect(events).toEqual([]);
     expect(tasks).toEqual([]);
-    expect(fs.existsSync(env.paths.eventsFilePath)).toBe(true);
-    expect(fs.existsSync(env.paths.tasksFilePath)).toBe(true);
+    expect(fs.existsSync(paths.eventsFilePath)).toBe(true);
+    expect(fs.existsSync(paths.tasksFilePath)).toBe(true);
   });
 
-  it('persists an event and creates new task record when task does not exist', async () => {
-    env = setupTestEnvironment();
+  it('appends and reads back event and task records directly from CSV files', async () => {
+    const { buildEvent, buildTask, storage } = setup();
 
-    const createdEvent = await env.service.recordEvent({
+    await storage.appendEvent(buildEvent({ duration: 2.5, isDone: true, task: 'Ticket 900' }));
+    await storage.appendTask(buildTask({ task: 'Ticket 900', totalTime: 2.5 }));
+
+    const events = await storage.getEvents();
+    const tasks = await storage.getTasks();
+
+    expect(events[0]?.task).toBe('Ticket 900');
+    expect(events[0]?.duration).toBe(2.5);
+    expect(events[0]?.isDone).toBe(true);
+    expect(tasks[0]?.task).toBe('Ticket 900');
+    expect(tasks[0]?.totalTime).toBe(2.5);
+  });
+
+  it('overwrites tasks file when saveTasks is called', async () => {
+    const { buildTask, storage } = setup();
+
+    await storage.appendTask(buildTask({ id: 1, task: 'Initial', totalTime: 1 }));
+    await storage.saveTasks([
+      buildTask({ finished: '2026-10-03 11:00', id: 1, task: 'Initial', totalTime: 3 }),
+    ]);
+
+    const tasks = await storage.getTasks();
+
+    expect(tasks).toHaveLength(1);
+    expect(tasks[0]?.totalTime).toBe(3);
+    expect(tasks[0]?.finished).toBe('2026-10-03 11:00');
+  });
+
+  it('integrates with createS20Service to persist events and synchronize task totals on disk', async () => {
+    const { service, storage } = setup();
+
+    await service.recordEvent({
       date: '2026-10-03',
       done: true,
       duration: 1.5,
-      notes: 'Initial ticket work',
       start: '13:00',
       task: 'Ticket 5260',
     });
 
-    expect(createdEvent.id).toBe(1);
-    expect(createdEvent.task).toBe('Ticket 5260');
-
-    const events = await env.storage.getEvents();
-
-    expect(events).toHaveLength(1);
-    expect(events[0]?.id).toBe(1);
-    expect(events[0]?.isDone).toBe(true);
-
-    const tasks = await env.storage.getTasks();
-
-    expect(tasks).toHaveLength(1);
-    expect(tasks[0]?.id).toBe(1);
-    expect(tasks[0]?.task).toBe('Ticket 5260');
-    expect(tasks[0]?.totalTime).toBe(1.5);
-    expect(tasks[0]?.started).toBe('2026-10-03 13:00');
-    expect(tasks[0]?.finished).toBe('2026-10-03 14:30');
-  });
-
-  it('persists updated task total time and status when adding to existing task', async () => {
-    env = setupTestEnvironment();
-
-    await env.service.recordEvent({
-      date: '2026-10-03',
-      done: true,
-      duration: 1,
-      notes: 'First part',
-      start: '09:00',
-      task: 'Ticket 5260',
-    });
-
-    const secondEvent = await env.service.recordEvent({
+    await service.recordEvent({
       date: '2026-10-03',
       done: false,
       duration: 0.5,
-      notes: 'Follow-up part',
-      start: '10:00',
+      start: '15:00',
       task: 'Ticket 5260',
     });
 
-    expect(secondEvent.id).toBe(2);
+    const events = await storage.getEvents();
+    const tasks = await storage.getTasks();
 
-    const tasks = await env.storage.getTasks();
-
+    expect(events).toHaveLength(2);
     expect(tasks).toHaveLength(1);
-    expect(tasks[0]?.totalTime).toBe(1.5);
+    expect(tasks[0]?.totalTime).toBe(2);
+    expect(tasks[0]?.started).toBe('2026-10-03 13:00');
     expect(tasks[0]?.finished).toBe('');
   });
 });

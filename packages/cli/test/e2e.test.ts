@@ -2,36 +2,57 @@ import { afterEach, describe, expect, it } from 'bun:test';
 import fs from 'node:fs';
 import path from 'node:path';
 
-function runCli(args: string[], cwd: string) {
-  const binPath = path.resolve(import.meta.dirname, '../../../bin/s20.ts');
-
-  return Bun.spawnSync(['bun', 'run', binPath, ...args], {
-    cwd,
-    env: { ...process.env },
-  });
-}
+const BIN_PATH = path.resolve(import.meta.dirname, '../../../bin/s20.ts');
 
 describe('e2e cli execution', () => {
-  const tmpDir = path.resolve(import.meta.dirname, `../test-e2e-${Date.now()}`);
+  const tempDirs: string[] = [];
+
+  function setup() {
+    const tmpDir = path.resolve(
+      import.meta.dirname,
+      `../test-e2e-${Date.now()}-${Math.random().toString(36).slice(2)}`,
+    );
+
+    tempDirs.push(tmpDir);
+    fs.mkdirSync(tmpDir, { recursive: true });
+
+    function runCli(args: string[]) {
+      return Bun.spawnSync(['bun', 'run', BIN_PATH, ...args], {
+        cwd: tmpDir,
+        env: { ...process.env },
+      });
+    }
+
+    return Object.freeze({
+      eventsPath: path.join(tmpDir, 'data', 'events.csv'),
+      logPath: path.join(tmpDir, 'data', 'logs', 's20-0001.jsonl'),
+      runAdd: (task: string, flags: string[] = []) => runCli(['add', task, ...flags]),
+      runCli,
+      runCompletion: (words: string[]) =>
+        runCli(['completion', 'complete', 'bash', '--', ...words]),
+      runList: (flags: string[] = []) => runCli(['list', ...flags]),
+      tasksPath: path.join(tmpDir, 'data', 'tasks.csv'),
+      tmpDir,
+    });
+  }
 
   afterEach(() => {
-    if (fs.existsSync(tmpDir)) {
-      fs.rmSync(tmpDir, { force: true, recursive: true });
+    while (tempDirs.length > 0) {
+      const dir = tempDirs.pop();
+
+      if (dir && fs.existsSync(dir)) {
+        fs.rmSync(dir, { force: true, recursive: true });
+      }
     }
   });
 
-  it('runs s20 <task> to record event into data/events.csv and data/tasks.csv', () => {
-    fs.mkdirSync(tmpDir, { recursive: true });
+  it('runs s20 <task> to record event into data/events.csv, data/tasks.csv, and rotating logs', () => {
+    const { eventsPath, logPath, runCli, tasksPath } = setup();
 
-    const proc = runCli(['Ticket 5260'], tmpDir);
+    const proc = runCli(['Ticket 5260']);
 
     expect(proc.exitCode).toBe(0);
     expect(proc.stdout.toString()).toContain('Recorded event #1: Ticket 5260');
-
-    const eventsPath = path.join(tmpDir, 'data', 'events.csv');
-    const tasksPath = path.join(tmpDir, 'data', 'tasks.csv');
-    const logPath = path.join(tmpDir, 'data', 'logs', 's20-0001.jsonl');
-
     expect(fs.existsSync(eventsPath)).toBe(true);
     expect(fs.existsSync(tasksPath)).toBe(true);
     expect(fs.existsSync(logPath)).toBe(true);
@@ -45,46 +66,43 @@ describe('e2e cli execution', () => {
     expect(logContent).toContain('"message":"Persisted event record"');
   });
 
-  it('runs s20 add with all flags and then lists events', () => {
-    fs.mkdirSync(tmpDir, { recursive: true });
+  it('accumulates task duration across multiple CLI runs and stamps finish time on completion', () => {
+    const { runAdd, runList, tasksPath } = setup();
 
-    const addProc = runCli(
-      [
-        'add',
-        'Ticket 5260',
-        '--start=05:30',
-        '--duration=2.25',
-        '--done',
-        '--notes=Had to wait for permission from bob',
-      ],
-      tmpDir,
-    );
+    const firstAdd = runAdd('Ticket 5260', ['--start=05:30', '--duration=1.5']);
+    const secondAdd = runAdd('Ticket 5260', [
+      '--start=07:00',
+      '--duration=45m',
+      '--done',
+      '--notes=Had to wait for permission from bob',
+    ]);
+    const listProc = runList();
 
-    expect(addProc.exitCode).toBe(0);
-    expect(addProc.stdout.toString()).toContain('Recorded event #1: Ticket 5260 at 05:30');
-
-    const listProc = runCli(['list'], tmpDir);
-
+    expect(firstAdd.exitCode).toBe(0);
+    expect(secondAdd.exitCode).toBe(0);
     expect(listProc.exitCode).toBe(0);
     expect(listProc.stdout.toString()).toContain('Ticket 5260');
 
-    const tasksPath = path.join(tmpDir, 'data', 'tasks.csv');
     const tasksContent = fs.readFileSync(tasksPath, 'utf-8');
 
-    expect(tasksContent).toMatch(/Ticket 5260,,\d{4}-\d{2}-\d{2} 05:30,\d{4}-\d{2}-\d{2} 07:45/);
+    expect(tasksContent).toMatch(
+      /Ticket 5260,,\d{4}-\d{2}-\d{2} 05:30,\d{4}-\d{2}-\d{2} 07:45,2\.25/,
+    );
   });
 
-  it('resolves shell completion suggestions dynamically for recorded tasks', () => {
-    fs.mkdirSync(tmpDir, { recursive: true });
+  it('resolves shell completion suggestions dynamically with active tasks prioritized first', () => {
+    const { runAdd, runCompletion } = setup();
 
-    runCli(['Ticket 5260'], tmpDir);
+    runAdd('Completed Task', ['--done']);
+    runAdd('Active Task');
 
-    const compProc = runCli(['completion', 'complete', 'bash', '--', 'add', '--task', ''], tmpDir);
+    const compProc = runCompletion(['add', '--task', '']);
 
     expect(compProc.exitCode).toBe(0);
 
-    const output = compProc.stdout.toString();
+    const lines = compProc.stdout.toString().trim().split('\n');
 
-    expect(output).toContain('Ticket 5260');
+    expect(lines[0]).toContain('Active Task');
+    expect(lines[1]).toContain('Completed Task');
   });
 });

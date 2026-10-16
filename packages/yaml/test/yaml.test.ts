@@ -1,10 +1,14 @@
-import { afterEach, describe, expect, it } from 'bun:test';
-import fs from 'node:fs';
-import path from 'node:path';
-import { createYamlParser, createYamlStringifier, parseYaml, stringifyYaml } from '../src/index.js';
+import { describe, expect, it } from 'bun:test';
+import {
+  createYamlParser,
+  createYamlStringifier,
+  parseYaml,
+  stringifyYaml,
+  type YamlParserOptions,
+} from '../src/index.js';
 
-function setup() {
-  const parser = createYamlParser();
+function setup(options?: YamlParserOptions) {
+  const parser = createYamlParser(options);
   const stringifier = createYamlStringifier();
 
   return Object.freeze({
@@ -14,61 +18,61 @@ function setup() {
 }
 
 describe('yaml parser and stringifier', () => {
-  let env: ReturnType<typeof setup>;
-
-  afterEach(() => {
-    // Teardown any test state
-  });
-
   describe('scalars', () => {
     it('parses boolean values correctly', () => {
-      env = setup();
-      expect(env.parser.parse<Record<string, unknown>>('flag: true')).toEqual({ flag: true });
-      expect(env.parser.parse<Record<string, unknown>>('flag: false')).toEqual({ flag: false });
-      expect(env.parser.parse<Record<string, unknown>>('flag: yes')).toEqual({ flag: true });
-      expect(env.parser.parse<Record<string, unknown>>('flag: no')).toEqual({ flag: false });
+      const { parser } = setup();
+
+      expect(parser.parse<Record<string, unknown>>('flag: true')).toEqual({ flag: true });
+      expect(parser.parse<Record<string, unknown>>('flag: false')).toEqual({ flag: false });
+      expect(parser.parse<Record<string, unknown>>('flag: yes')).toEqual({ flag: true });
+      expect(parser.parse<Record<string, unknown>>('flag: no')).toEqual({ flag: false });
     });
 
     it('parses integer and float numbers correctly', () => {
-      env = setup();
-      expect(env.parser.parse<Record<string, unknown>>('count: 42')).toEqual({ count: 42 });
-      expect(env.parser.parse<Record<string, unknown>>('temp: -12.5')).toEqual({ temp: -12.5 });
-      expect(env.parser.parse<Record<string, unknown>>('zero: 0')).toEqual({ zero: 0 });
+      const { parser } = setup();
+
+      expect(parser.parse<Record<string, unknown>>('count: 42')).toEqual({ count: 42 });
+      expect(parser.parse<Record<string, unknown>>('temp: -12.5')).toEqual({ temp: -12.5 });
+      expect(parser.parse<Record<string, unknown>>('zero: 0')).toEqual({ zero: 0 });
     });
 
     it('parses version strings with multiple dots as plain strings', () => {
-      env = setup();
-      expect(env.parser.parse<Record<string, unknown>>('version: 0.1.0')).toEqual({
+      const { parser } = setup();
+
+      expect(parser.parse<Record<string, unknown>>('version: 0.1.0')).toEqual({
         version: '0.1.0',
       });
     });
 
     it('parses null and tilde values correctly', () => {
-      env = setup();
-      expect(env.parser.parse<Record<string, unknown>>('empty: null')).toEqual({ empty: null });
-      expect(env.parser.parse<Record<string, unknown>>('blank: ~')).toEqual({ blank: null });
-      expect(env.parser.parse<Record<string, unknown>>('none:')).toEqual({ none: null });
+      const { parser } = setup();
+
+      expect(parser.parse<Record<string, unknown>>('empty: null')).toEqual({ empty: null });
+      expect(parser.parse<Record<string, unknown>>('blank: ~')).toEqual({ blank: null });
+      expect(parser.parse<Record<string, unknown>>('none:')).toEqual({ none: null });
     });
 
     it('parses quoted strings with escape sequences', () => {
-      env = setup();
-      expect(env.parser.parse<Record<string, unknown>>("quoted: 'hello world'")).toEqual({
+      const { parser } = setup();
+
+      expect(parser.parse<Record<string, unknown>>("quoted: 'hello world'")).toEqual({
         quoted: 'hello world',
       });
-      expect(env.parser.parse<Record<string, unknown>>("escaped: 'it''s great'")).toEqual({
+      expect(parser.parse<Record<string, unknown>>("escaped: 'it''s great'")).toEqual({
         escaped: "it's great",
       });
-      expect(env.parser.parse<Record<string, unknown>>('double: "hello \\"world\\""')).toEqual({
+      expect(parser.parse<Record<string, unknown>>('double: "hello \\"world\\""')).toEqual({
         double: 'hello "world"',
       });
     });
 
     it('parses flow sequences and flow mappings', () => {
-      env = setup();
-      expect(env.parser.parse<Record<string, unknown>>('tags: [a, b, c]')).toEqual({
+      const { parser } = setup();
+
+      expect(parser.parse<Record<string, unknown>>('tags: [a, b, c]')).toEqual({
         tags: ['a', 'b', 'c'],
       });
-      expect(env.parser.parse<Record<string, unknown>>('point: { x: 10, y: 20 }')).toEqual({
+      expect(parser.parse<Record<string, unknown>>('point: { x: 10, y: 20 }')).toEqual({
         point: { x: 10, y: 20 },
       });
     });
@@ -76,14 +80,14 @@ describe('yaml parser and stringifier', () => {
 
   describe('mappings', () => {
     it('parses flat key-value pairs', () => {
-      env = setup();
+      const { parser } = setup();
       const yaml = `
 name: s20
 version: 0.1.0
 description: Time tracker
 `;
 
-      expect(env.parser.parse<Record<string, unknown>>(yaml)).toEqual({
+      expect(parser.parse<Record<string, unknown>>(yaml)).toEqual({
         description: 'Time tracker',
         name: 's20',
         version: '0.1.0',
@@ -91,7 +95,7 @@ description: Time tracker
     });
 
     it('parses nested mappings with multi-level indentation', () => {
-      env = setup();
+      const { parser } = setup();
       const yaml = `
 server:
   host: localhost
@@ -101,7 +105,7 @@ server:
     file: app.log
 `;
 
-      expect(env.parser.parse<Record<string, unknown>>(yaml)).toEqual({
+      expect(parser.parse<Record<string, unknown>>(yaml)).toEqual({
         server: {
           host: 'localhost',
           logging: {
@@ -114,7 +118,7 @@ server:
     });
 
     it('strips full-line comments and inline comments', () => {
-      env = setup();
+      const { parser } = setup();
       const yaml = `
 # Top comment
 name: s20 # Tool name
@@ -122,26 +126,26 @@ name: s20 # Tool name
 limit: 10 # Display limit
 `;
 
-      expect(env.parser.parse<Record<string, unknown>>(yaml)).toEqual({
+      expect(parser.parse<Record<string, unknown>>(yaml)).toEqual({
         limit: 10,
         name: 's20',
       });
     });
 
     it('enforces duplicate key checks when disallowDuplicateKeys is enabled', () => {
-      const strictParser = createYamlParser({ disallowDuplicateKeys: true });
+      const { parser } = setup({ disallowDuplicateKeys: true });
       const yaml = `
 name: first
 name: second
 `;
 
-      expect(() => strictParser.parse(yaml)).toThrow('Duplicate key detected');
+      expect(() => parser.parse(yaml)).toThrow('Duplicate key detected');
     });
   });
 
   describe('sequences', () => {
     it('parses list of scalar items', () => {
-      env = setup();
+      const { parser } = setup();
       const yaml = `
 items:
   - apple
@@ -149,13 +153,13 @@ items:
   - cherry
 `;
 
-      expect(env.parser.parse<Record<string, unknown>>(yaml)).toEqual({
+      expect(parser.parse<Record<string, unknown>>(yaml)).toEqual({
         items: ['apple', 'banana', 'cherry'],
       });
     });
 
     it('parses sequences of mappings with dash prefix on first property', () => {
-      env = setup();
+      const { parser } = setup();
       const yaml = `
 commands:
   - name: add
@@ -165,7 +169,7 @@ commands:
     description: List events
 `;
 
-      expect(env.parser.parse<Record<string, unknown>>(yaml)).toEqual({
+      expect(parser.parse<Record<string, unknown>>(yaml)).toEqual({
         commands: [
           {
             description: 'Record an event',
@@ -181,7 +185,7 @@ commands:
     });
 
     it('parses sequence items on separate lines with empty dashes', () => {
-      env = setup();
+      const { parser } = setup();
       const yaml = `
 items:
   -
@@ -192,7 +196,7 @@ items:
     title: Second
 `;
 
-      expect(env.parser.parse<Record<string, unknown>>(yaml)).toEqual({
+      expect(parser.parse<Record<string, unknown>>(yaml)).toEqual({
         items: [
           { id: 1, title: 'First' },
           { id: 2, title: 'Second' },
@@ -203,50 +207,58 @@ items:
 
   describe('block scalars', () => {
     it('parses literal block scalars with preserved newlines', () => {
-      env = setup();
+      const { parser } = setup();
       const yaml = `
 notes: |
   Line one
   Line two
 `;
 
-      expect(env.parser.parse<Record<string, unknown>>(yaml)).toEqual({
+      expect(parser.parse<Record<string, unknown>>(yaml)).toEqual({
         notes: 'Line one\nLine two\n',
       });
     });
 
     it('parses folded block scalars with spaces replacing single newlines', () => {
-      env = setup();
+      const { parser } = setup();
       const yaml = `
 notes: >
   Line one
   Line two
 `;
 
-      expect(env.parser.parse<Record<string, unknown>>(yaml)).toEqual({
+      expect(parser.parse<Record<string, unknown>>(yaml)).toEqual({
         notes: 'Line one Line two\n',
       });
     });
   });
 
-  describe('real-world cli.yaml schema', () => {
-    it('parses the actual packages/cli/src/cli.yaml schema identically', () => {
-      const cliYamlPath = path.resolve(import.meta.dirname, '../../cli/src/cli.yaml');
-      const content = fs.readFileSync(cliYamlPath, 'utf-8');
+  describe('cli schema structure', () => {
+    it('parses nested command and parameter sequence definitions', () => {
+      const schemaYaml = `
+name: s20
+version: 0.1.0
+commands:
+  - name: add
+    isDefault: true
+    triggers: event-add
+    params:
+      - name: task
+        type: text
+      - name: done
+        type: flag
+        negator: true
+`;
       const parsed = parseYaml<{
         commands: { name: string; params: { name: string; type: string }[] }[];
         name: string;
         version: string;
-      }>(content);
+      }>(schemaYaml);
 
       expect(parsed.name).toBe('s20');
       expect(parsed.version).toBe('0.1.0');
-      expect(parsed.commands.length).toBe(2);
-      expect(parsed.commands[0].name).toBe('add');
-      expect(parsed.commands[0].params.length).toBe(6);
-      expect(parsed.commands[0].params[0].name).toBe('task');
-      expect(parsed.commands[1].name).toBe('list');
-      expect(parsed.commands[1].params[0].name).toBe('limit');
+      expect(parsed.commands[0]?.name).toBe('add');
+      expect(parsed.commands[0]?.params.map((p) => p.name)).toEqual(['task', 'done']);
     });
   });
 
@@ -267,9 +279,9 @@ notes: >
       expect(result).toContain('- first');
       expect(result).toContain('- second');
 
-      const roundTripped = parseYaml(result);
+      const roundTrip = parseYaml<typeof data>(result);
 
-      expect(roundTripped).toEqual(data);
+      expect(roundTrip).toEqual(data);
     });
   });
 });

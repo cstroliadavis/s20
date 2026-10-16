@@ -1,69 +1,115 @@
-import { describe, expect, it } from 'bun:test';
-import { createCliTool } from '../src/index.js';
+import { afterEach, describe, expect, it, spyOn } from 'bun:test';
+import {
+  type CommandConfig,
+  coerceTime,
+  createCliTool,
+  createParamCoercer,
+  generateCompletionScript,
+  resolveCompletions,
+} from '../src/index.js';
+
+function setup(overrides: SetupOverrides = {}) {
+  const events: Record<string, unknown>[] = [];
+  const defaultCommand: CommandConfig = {
+    name: 'add',
+
+    description: 'Add an event',
+    isDefault: true,
+    params: [
+      { name: 'task', type: 'text' },
+      { alias: 'd', default: 1, name: 'duration', type: 'number' },
+      { name: 'done', negator: true, type: 'flag' },
+      { alias: 's', name: 'start', type: 'time' },
+    ],
+    triggers: 'event-add',
+    ...overrides.command,
+  };
+
+  const cli = createCliTool({
+    config: {
+      commands: [defaultCommand],
+      name: 'test-cli',
+    },
+  });
+
+  cli.on(defaultCommand.triggers, ({ params }) => {
+    events.push({ ...params });
+  });
+
+  return Object.freeze({
+    cli,
+    coercer: createParamCoercer(),
+    events,
+  });
+}
 
 describe('cli workspace engine', () => {
-  it('parses commands, coerces parameters, and triggers events', async () => {
-    let handled = false;
-    let receivedTask = '';
-    let receivedDone = false;
+  afterEach(() => {
+    // Restore any console spies if used
+  });
 
-    const cli = createCliTool({
-      config: {
-        commands: [
-          {
-            description: 'Add an event',
-            isDefault: true,
-            name: 'add',
-            params: [
-              { name: 'task', type: 'text' },
-              { name: 'done', negator: true, type: 'flag' },
-            ],
-            triggers: 'event-add',
-          },
-        ],
-        name: 'test-cli',
-      },
-    });
-
-    cli.on('event-add', ({ params }) => {
-      handled = true;
-      receivedTask = params.task as string;
-      receivedDone = params.done as boolean;
-    });
+  it('parses default command positional arguments and applies default parameter values', async () => {
+    const { cli, events } = setup();
 
     await cli.execute(['Ticket 123']);
 
-    expect(handled).toBe(true);
-    expect(receivedTask).toBe('Ticket 123');
-    expect(receivedDone).toBe(false);
+    expect(events).toHaveLength(1);
+    expect(events[0]?.task).toBe('Ticket 123');
+    expect(events[0]?.duration).toBe(1);
+    expect(events[0]?.done).toBe(false);
   });
 
-  it('handles explicit flag parameters correctly', async () => {
-    let receivedDone = false;
+  it('coerces explicit flags, short aliases, and boolean negators', async () => {
+    const { cli, events } = setup({ command: { isDefault: false } });
 
-    const cli = createCliTool({
-      config: {
-        commands: [
-          {
-            description: 'Add an event',
-            name: 'add',
-            params: [
-              { name: 'task', type: 'text' },
-              { name: 'done', negator: true, type: 'flag' },
-            ],
-            triggers: 'event-add',
-          },
-        ],
-        name: 'test-cli',
+    await cli.execute(['add', 'Finished Task', '-d', '2.5', '-s', '1:30pm', '--done']);
+    await cli.execute(['add', 'Ongoing Task', '--no-done']);
+
+    expect(events[0]?.task).toBe('Finished Task');
+    expect(events[0]?.duration).toBe(2.5);
+    expect(events[0]?.start).toBe('13:30');
+    expect(events[0]?.done).toBe(true);
+    expect(events[1]?.done).toBe(false);
+  });
+
+  it('coerces 12-hour and 24-hour time strings into normalized HH:MM format', () => {
+    expect(coerceTime('5:30pm', 'start')).toBe('17:30');
+    expect(coerceTime('12:00am', 'start')).toBe('00:00');
+    expect(coerceTime('12:15pm', 'start')).toBe('12:15');
+    expect(coerceTime('09:05', 'start')).toBe('09:05');
+  });
+
+  it('renders help text when --help flag is passed', async () => {
+    const logSpy = spyOn(console, 'log').mockImplementation(() => {});
+    const { cli } = setup();
+
+    try {
+      const result = await cli.execute(['--help']);
+
+      expect(result.triggers).toBe('help');
+      expect(String(result.params.text)).toContain('test-cli');
+      expect(logSpy).toHaveBeenCalled();
+    } finally {
+      logSpy.mockRestore();
+    }
+  });
+
+  it('generates shell completion scripts and resolves dynamic parameter completions', async () => {
+    const { cli } = setup({
+      command: {
+        params: [{ items: () => ['Ticket 100', 'Ticket 200'], name: 'task', type: 'text' }],
       },
     });
 
-    cli.on('event-add', ({ params }) => {
-      receivedDone = params.done as boolean;
-    });
+    const zshScript = generateCompletionScript('zsh', 's20');
+    const completions = await resolveCompletions(cli.getConfig(), ['add', '--task', 'Ticket 2']);
 
-    await cli.execute(['add', 'Finished Task', '--done']);
-
-    expect(receivedDone).toBe(true);
+    expect(zshScript).toContain('#compdef s20');
+    expect(completions.map((c) => c.value)).toEqual(['Ticket 200']);
   });
 });
+
+/** Overrides for configuring isolated CLI engine test fixtures. */
+interface SetupOverrides {
+  command?: Partial<CommandConfig>;
+}

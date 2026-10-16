@@ -1,89 +1,164 @@
-import { describe, expect, it } from 'bun:test';
-import { createDefaultConfig, createMemoryStorage, createS20Service } from '@s20/app';
+import { afterEach, describe, expect, it, spyOn } from 'bun:test';
+import type { AddEventOptions, EventRecord, S20Service, TaskRecord } from '@s20/app';
 import { createS20Cli } from '../src/s20-cli.js';
 
-function setup() {
-  const config = createDefaultConfig();
-  const storage = createMemoryStorage();
-  const service = createS20Service({ config, storage });
-  const cli = createS20Cli({ service });
+function buildEventRecord(overrides: Partial<EventRecord> = {}, index = 0): EventRecord {
+  return Object.freeze({
+    id: overrides.id ?? index + 1,
 
-  return {
+    date: overrides.date ?? '2026-10-03',
+    duration: overrides.duration ?? 1,
+    isDone: overrides.isDone ?? false,
+    notes: overrides.notes ?? '',
+    start: overrides.start ?? '12:45',
+    task: overrides.task ?? 'Ticket 5260',
+  });
+}
+
+function setup(overrides: SetupOverrides = {}) {
+  const recordedInputs: AddEventOptions[] = [];
+  const storedEvents: EventRecord[] = (overrides.events ?? []).map((e, i) =>
+    buildEventRecord(e, i),
+  );
+  const suggestions = overrides.suggestions ?? ['Ticket 5260'];
+
+  const mockService: S20Service = Object.freeze({
+    getTaskSuggestions: async () => [...suggestions],
+    listEvents: async () => [...storedEvents],
+    listTasks: async (): Promise<TaskRecord[]> => [],
+    recordEvent: async (options: AddEventOptions): Promise<EventRecord> => {
+      recordedInputs.push(options);
+
+      const created = buildEventRecord(
+        {
+          duration: typeof options.duration === 'number' ? options.duration : 1,
+          isDone: Boolean(options.done),
+          notes: options.notes ?? '',
+          start: options.start ?? '12:45',
+          task: options.task,
+        },
+        storedEvents.length,
+      );
+
+      storedEvents.push(created);
+
+      return created;
+    },
+  });
+
+  const logSpy = spyOn(console, 'log').mockImplementation(() => {});
+  const tableSpy = spyOn(console, 'table').mockImplementation(() => {});
+  const cli = createS20Cli({ service: mockService });
+
+  return Object.freeze({
     cli,
-    config,
-    service,
-    storage,
-  };
+    logSpy,
+    mockService,
+    recordedInputs,
+    tableSpy,
+  });
 }
 
 describe('s20-cli', () => {
-  it('executes default add command with single positional task argument', async () => {
-    const env = setup();
-
-    await env.cli.execute(['Ticket 5260']);
-
-    const events = await env.service.listEvents();
-    const tasks = await env.service.listTasks();
-
-    expect(events).toHaveLength(1);
-    expect(events[0]?.task).toBe('Ticket 5260');
-    expect(events[0]?.isDone).toBe(false);
-    expect(tasks[0]?.finished).toBe('');
+  afterEach(() => {
+    // Ensure any console spies are restored if a test fails mid-execution
   });
 
-  it('marks event as completed when --done flag is provided', async () => {
-    const env = setup();
+  it('maps default positional task argument to service.recordEvent and prints summary', async () => {
+    const { cli, logSpy, recordedInputs, tableSpy } = setup();
 
-    await env.cli.execute(['add', 'Completed Task', '--done']);
+    try {
+      await cli.execute(['Ticket 5260']);
 
-    const events = await env.service.listEvents();
-    const tasks = await env.service.listTasks();
-
-    expect(events).toHaveLength(1);
-    expect(events[0]?.isDone).toBe(true);
-    expect(tasks[0]?.finished).not.toBe('');
+      expect(recordedInputs).toHaveLength(1);
+      expect(recordedInputs[0]?.task).toBe('Ticket 5260');
+      expect(recordedInputs[0]?.done).toBe(false);
+      expect(logSpy).toHaveBeenCalledWith('Recorded event #1: Ticket 5260 at 12:45');
+    } finally {
+      logSpy.mockRestore();
+      tableSpy.mockRestore();
+    }
   });
 
-  it('executes add command with explicit start, duration, and notes flags', async () => {
-    const env = setup();
+  it('passes done=true to service.recordEvent when --done flag is provided', async () => {
+    const { cli, logSpy, recordedInputs, tableSpy } = setup();
 
-    await env.cli.execute([
-      'add',
-      'Ticket 5260',
-      '--start=05:30',
-      '--duration=2.25',
-      '--notes=Had to wait for permission from bob',
-    ]);
+    try {
+      await cli.execute(['add', 'Completed Task', '--done']);
 
-    const events = await env.service.listEvents();
-
-    expect(events).toHaveLength(1);
-    expect(events[0]?.task).toBe('Ticket 5260');
-    expect(events[0]?.start).toBe('05:30');
-    expect(events[0]?.duration).toBe(2.25);
-    expect(events[0]?.notes).toBe('Had to wait for permission from bob');
+      expect(recordedInputs[0]?.task).toBe('Completed Task');
+      expect(recordedInputs[0]?.done).toBe(true);
+    } finally {
+      logSpy.mockRestore();
+      tableSpy.mockRestore();
+    }
   });
 
-  it('supports --no-done negator flag to set isDone to false', async () => {
-    const env = setup();
+  it('forwards explicit start, duration, and notes flags to service.recordEvent', async () => {
+    const { cli, logSpy, recordedInputs, tableSpy } = setup();
 
-    await env.cli.execute(['add', 'Ongoing Task', '--no-done']);
+    try {
+      await cli.execute([
+        'add',
+        'Ticket 5260',
+        '--start=05:30',
+        '--duration=2.25',
+        '--notes=Had to wait for permission from bob',
+      ]);
 
-    const events = await env.service.listEvents();
-
-    expect(events).toHaveLength(1);
-    expect(events[0]?.task).toBe('Ongoing Task');
-    expect(events[0]?.isDone).toBe(false);
+      expect(recordedInputs[0]).toMatchObject({
+        duration: '2.25',
+        notes: 'Had to wait for permission from bob',
+        start: '05:30',
+        task: 'Ticket 5260',
+      });
+    } finally {
+      logSpy.mockRestore();
+      tableSpy.mockRestore();
+    }
   });
 
-  it('executes list command without errors', async () => {
-    const env = setup();
+  it('supports --no-done negator flag to set done to false', async () => {
+    const { cli, logSpy, recordedInputs, tableSpy } = setup();
 
-    await env.cli.execute(['Ticket 1']);
-    await env.cli.execute(['Ticket 2']);
+    try {
+      await cli.execute(['add', 'Ongoing Task', '--no-done']);
 
-    const output = await env.cli.execute(['list']);
+      expect(recordedInputs[0]?.task).toBe('Ongoing Task');
+      expect(recordedInputs[0]?.done).toBe(false);
+    } finally {
+      logSpy.mockRestore();
+      tableSpy.mockRestore();
+    }
+  });
 
-    expect(output).toBeDefined();
+  it('formats recent events with console.table or logs empty message when none exist', async () => {
+    const emptyEnv = setup({ events: [] });
+
+    try {
+      await emptyEnv.cli.execute(['list']);
+      expect(emptyEnv.logSpy).toHaveBeenCalledWith('No events recorded yet.');
+    } finally {
+      emptyEnv.logSpy.mockRestore();
+      emptyEnv.tableSpy.mockRestore();
+    }
+
+    const populatedEnv = setup({
+      events: [{ task: 'Ticket 1' }, { task: 'Ticket 2' }],
+    });
+
+    try {
+      await populatedEnv.cli.execute(['list', '--limit', '1']);
+      expect(populatedEnv.tableSpy).toHaveBeenCalledTimes(1);
+    } finally {
+      populatedEnv.logSpy.mockRestore();
+      populatedEnv.tableSpy.mockRestore();
+    }
   });
 });
+
+/** Overrides for configuring isolated S20 CLI adapter test fixtures. */
+interface SetupOverrides {
+  events?: Partial<EventRecord>[];
+  suggestions?: string[];
+}
