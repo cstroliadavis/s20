@@ -6,7 +6,7 @@
 
 # Interface: EventRecord
 
-Domain representation of a tracked event stored in events.csv.
+Domain representation of a tracked event record.
 
 ## Properties
 

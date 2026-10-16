@@ -6,7 +6,7 @@
 
 # Interface: TaskRecord
 
-Domain representation of an aggregate tracked task stored in tasks.csv.
+Domain representation of an aggregate tracked task.
 
 ## Properties
 

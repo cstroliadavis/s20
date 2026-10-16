@@ -7,41 +7,36 @@ guidelines for the **Spouse 2.0 (S20)** time tracking engine and CLI.
 
 ## 1. System Architecture
 
-S20 is built as a modular monolith running natively on the **Bun** runtime. It is structured into
-independent workspace packages managed under `packages/*`:
+S20 is built as a Clean Architecture modular monolith running natively on the **Bun** runtime.
+Dependencies point strictly **inward** toward the platform-agnostic `@s20/app` core:
 
 ```text
-┌────────────────────────────────────────────────────────┐
-│                   CLI Entry Point                      │
-│                    (bin/s20.ts)                        │
-└──────────────────────────┬─────────────────────────────┘
-                           │
-┌──────────────────────────▼─────────────────────────────┐
-│                 @s20/app Workspace                     │
-│                  (packages/app)                        │
-│     - Application service layer & task coordination    │
-│     - Time calculation, duration parsing & rounding    │
-│     - CSV storage engine & task synchronization        │
-│     - CLI integration & dynamic suggestion providers   │
-└──────────────┬───────────────────────────┬─────────────┘
-               │                           │
-┌──────────────▼─────────────┐ ┌───────────▼─────────────┐
-│      @s20/cli Workspace    │ │     @s20/csv Workspace  │
-│       (packages/cli)       │ │      (packages/csv)     │
-│ - Schema-driven CLI engine │ │ - RFC 4180 CSV parser   │
-│ - Argument token parsing   │ │ - CSV stringifier       │
-│ - Parameter coercion       │ │ - File read/write/append│
-│ - Shell tab completions    │ │ - Async row streaming   │
-└──────────────┬─────────────┘ └─────────────────────────┘
-               │
-┌──────────────▼─────────────┐
-│     @s20/yaml Workspace    │
-│       (packages/yaml)      │
-│ - Zero-dependency YAML     │
-│ - Block/flow scalar parser │
-│ - Maps, sequences, chomping│
-│ - YAML serializer          │
-└────────────────────────────┘
+                  ┌────────────────────────────────────────┐
+                  │      Composition Root (bin/s20.ts)     │
+                  └──────┬──────────────────────────┬──────┘
+                         │                          │
+        ┌────────────────▼────────────┐    ┌────────▼────────────────────┐
+        │     Presentation Layer      │    │      Persistence Layer      │
+        │    @s20/cli (packages/cli)  │    │ @s20/storage (packages/...) │
+        │  - S20 CLI adapter (s20-cli)│    │  - CSV storage adapter      │
+        │  - Schema-driven CLI engine │    │  - Local filesystem paths   │
+        └──┬───────────────────────┬──┘    └──┬───────────────────────┬──┘
+           │                       │          │ (Implements Port)     │
+           │                       ▼          ▼                       │
+           │             ┌──────────────────────────────┐             │
+           │             │  Application & Domain Layer  │             │
+           │             │    @s20/app (packages/app)   │             │
+           │             │  - 100% Isomorphic (Web API) │             │
+           │             │  - S20Service & S20Storage   │             │
+           │             │  - Time math & task rules    │             │
+           │             └──────────────┬───────────────┘             │
+           │                            │                             │
+┌──────────▼───────────┐     ┌──────────▼───────────┐     ┌───────────▼──────────┐
+│  @s20/yaml Workspace │     │ @s20/logging Package │     │  @s20/csv Workspace  │
+│    (packages/yaml)   │     │  (packages/logging)  │     │    (packages/csv)    │
+│ - Zero-dep YAML      │     │ - Structured logger  │     │ - RFC 4180 CSV parser│
+│ - Scalar/block parser│     │ - Rotating JSONL sink│     │ - CSV stringifier    │
+└──────────────────────┘     └──────────────────────┘     └──────────────────────┘
 ```
 
 ---
@@ -51,104 +46,90 @@ independent workspace packages managed under `packages/*`:
 ```text
 S20/
 ├── bin/
-│   └── s20.ts                 # CLI entry point script importing @s20/app
+│   └── s20.ts                 # Composition root wiring @s20/app, @s20/storage & @s20/cli
 ├── data/                      # Default directory for persistent CSV files
 │   ├── events.csv             # Chronological event log
 │   └── tasks.csv              # Aggregate task registry
 ├── docs/                      # Generated documentation
 │   ├── html/                  # Searchable HTML API reference
-│   ├── markdown/              # Native GitHub Markdown API reference
-│   └── README.md              # Documentation index & navigation
+│   └── markdown/              # Native GitHub Markdown API reference
 ├── packages/
-│   ├── app/                   # @s20/app: S20 domain logic, storage & service
-│   │   ├── cli.yaml           # YAML CLI schema definition for S20
+│   ├── app/                   # @s20/app: Isomorphic domain models, rules, ports & service
 │   │   ├── src/
-│   │   │   ├── cli.ts         # CLI binding, dynamic providers & event handlers
-│   │   │   ├── config.ts      # Configuration interface, defaults & factory
+│   │   │   ├── config.ts      # Platform-independent domain configuration & defaults
 │   │   │   ├── index.ts       # Public library exports for @s20/app
+│   │   │   ├── memory-storage.ts # In-memory S20Storage adapter for tests & browser
 │   │   │   ├── s20-service.ts # Application service orchestrating operations
-│   │   │   ├── storage.ts     # CSV storage engine and task synchronization
+│   │   │   ├── task-rules.ts  # Pure task lifecycle, accumulation & ranking rules
 │   │   │   ├── time-utils.ts  # Duration parsing, time rounding & calculation
-│   │   │   └── types.ts       # Core domain types and CSV column schemas
+│   │   │   └── types.ts       # Core domain entities and S20Storage port contract
 │   │   ├── test/
 │   │   └── package.json       # @s20/app package definition
-│   ├── cli/                   # @s20/cli: Command-line engine & argument parser
+│   ├── storage/               # @s20/storage: Persistence adapters implementing S20Storage
+│   │   ├── src/
+│   │   │   ├── csv-storage.ts # CSV storage adapter using @s20/csv
+│   │   │   ├── index.ts       # Public exports for @s20/storage
+│   │   │   ├── paths.ts       # Local filesystem path resolution
+│   │   │   └── types.ts       # StoragePaths and CSV column schemas
+│   │   ├── test/
+│   │   └── package.json       # @s20/storage package definition
+│   ├── cli/                   # @s20/cli: Presentation adapter & CLI engine
+│   │   ├── cli.yaml           # YAML CLI schema definition for S20
 │   │   ├── src/
 │   │   │   ├── arg-parser.ts  # Token scanning, argument matching & flag resolution
 │   │   │   ├── cli-tool.ts    # CLI tool instance factory & execution pipeline
 │   │   │   ├── config-loader.ts # YAML schema loader & validator
 │   │   │   ├── help-formatter.ts # Console help generation
 │   │   │   ├── index.ts       # Public exports for @s20/cli
+│   │   │   ├── s20-cli.ts     # S20 CLI presentation controller binding to S20Service
 │   │   │   └── types.ts       # CLI configuration interfaces & definitions
 │   │   ├── test/
 │   │   └── package.json       # @s20/cli package definition
 │   ├── csv/                   # @s20/csv: RFC 4180 CSV parser and file I/O
-│   │   ├── src/
-│   │   │   ├── file.ts        # High-level readCsvFile, writeCsvFile, appendCsvFile
-│   │   │   ├── parser.ts      # Chunk and stream CSV parsing
-│   │   │   ├── stringifier.ts # Row and record formatting & quoting
-│   │   │   ├── index.ts       # Public exports for @s20/csv
-│   │   │   └── types.ts       # CSV options, records, and row schemas
-│   │   ├── test/
-│   │   └── package.json       # @s20/csv package definition
+│   ├── logging/               # @s20/logging: Structured logger and JSONL file plugin
 │   └── yaml/                  # @s20/yaml: Zero-dependency YAML parser and stringifier
-│       ├── src/
-│       │   ├── block-scalar.ts # Multiline block scalar (| and >) parsing
-│       │   ├── index.ts       # Public exports for @s20/yaml
-│       │   ├── interfaces.types.ts # Parser and stringifier interfaces
-│       │   ├── key-detector.ts # Key delimiter and quote boundary detection
-│       │   ├── line-scanner.ts # Line indentation and comment stripping
-│       │   ├── options.types.ts # Parser and stringifier options
-│       │   ├── parser.ts      # Recursive YAML document parser
-│       │   ├── scalar-parser.ts # Primitives, quoted strings & flow collections
-│       │   ├── stringifier.ts # YAML serialization with smart quoting
-│       │   └── types.ts       # Central re-exports
-│       ├── test/
-│       └── package.json       # @s20/yaml package definition
 ├── package.json               # Monorepo workspaces, scripts, and devDependencies
 ├── tsconfig.json              # TypeScript compiler configuration with path aliases
 ├── typedoc.json               # TypeDoc API documentation configuration
-└── eslint.config.js           # ESLint flat configuration
+└── bunfig.toml                # Bun formatter, linter, and test runner configuration
 ```
 
 ---
 
 ## 3. Workspace Responsibilities
 
-### `@s20/app` (`packages/app`)
+### `@s20/app` (`packages/app` — Application & Domain Layer)
 
-- **`cli.ts`**: Loads `cli.yaml` via `@s20/cli`, injects dynamic task autocompletions from the
-  application service, and maps `event-add` and `event-list` commands to service operations.
-- **`s20-service.ts`**: Coordinates time calculations, applies task-specific default durations (e.g.
-  `Lunch` -> 1h, `Break` -> 15m), and delegates persistence to `storage.ts`.
-- **`storage.ts`**: Interacts with CSV files via `@s20/csv`, manages ID increments, accumulates
-  total task durations, and ranks task suggestions with open tasks prioritized first.
+- **100% Isomorphic**: Zero dependencies on `node:*`, `Bun.*`, `@s20/cli`, or `@s20/csv`. Runs
+  unchanged in CLI, TUI, Web API server, or browser PWA environments.
+- **`s20-service.ts`**: Coordinates time calculations, applies task-specific default durations,
+  synchronizes task state, and delegates persistence exclusively through the `S20Storage` port.
+- **`task-rules.ts`**: Pure domain functions for creating task records, accumulating `totalTime`,
+  computing `finished` timestamps, and ranking completion suggestions.
 - **`time-utils.ts`**: Parses durations (`15m`, `30m`, `1h`, `1.5h`, `90m`, `2.25`) into decimal
   hours, subtracts durations from the current time to compute default start times, and rounds to
-  15-minute increments.
-- **`config.ts`**: Provides application defaults and resolves file storage locations.
+  15-minute increments using the standard `Temporal` and `Intl` APIs.
+- **`config.ts`**: Provides platform-agnostic domain defaults.
+- **`memory-storage.ts`**: Provides an in-memory `S20Storage` implementation for fast unit testing.
 
-### `@s20/cli` (`packages/cli`)
+### `@s20/storage` (`packages/storage` — Persistence Layer)
 
-- Implements a schema-driven command-line parsing and event execution subsystem.
-- Handles YAML configuration loading, positional arguments, short and long flags, boolean negators
-  (`--no-done`), time and type coercers, and shell completion scripts.
+- **`csv-storage.ts`**: Implements `@s20/app`'s `S20Storage` interface using `@s20/csv` to read,
+  append, and overwrite `events.csv` and `tasks.csv`.
+- **`paths.ts`**: Resolves local filesystem directories and file paths (`createDefaultStoragePaths`).
 
-### `@s20/csv` (`packages/csv`)
+### `@s20/cli` (`packages/cli` — Presentation Layer)
 
-- Recreates RFC 4180 compliant CSV parsing, serialization, and file streaming derived from csv-lib.
-- Provides `readCsvFile`, `writeCsvFile`, and `appendCsvFile` with automatic header management,
-  delimiters, and quotes escaping.
+- **`s20-cli.ts`**: Loads `cli.yaml`, injects dynamic task autocompletions from `S20Service`, and
+  maps `event-add` and `event-list` commands to service operations.
+- **CLI Engine**: Implements schema-driven command-line parsing, positional arguments, flags,
+  boolean negators (`--no-done`), type coercers, and shell completion scripts.
 
-### `@s20/yaml` (`packages/yaml`)
+### `@s20/csv`, `@s20/yaml`, `@s20/logging` (Foundational Tooling)
 
-- Recreates zero-dependency YAML parsing and stringification tailored for CLI configurations and
-  application schemas.
-- Parses block mappings, nested sequences (`- item` and inline `- key: val`), literal (`|`) and
-  folded (`>`) multiline block scalars with chomping (`+`, `-`), inline flow collections
-  (`[...]`, `{...}`), comments, and primitives.
-- Provides `parseYaml` and `stringifyYaml` functional interfaces alongside factory functions
-  `createYamlParser` and `createYamlStringifier`.
+- **`@s20/csv`**: RFC 4180 compliant CSV parsing, serialization, and file streaming.
+- **`@s20/yaml`**: Zero-dependency YAML parsing and stringification.
+- **`@s20/logging`**: Structured event logger with pluggable sinks (`jsonlFilePlugin`).
 
 ---
 

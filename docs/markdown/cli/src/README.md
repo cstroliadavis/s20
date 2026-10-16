@@ -9,6 +9,7 @@
 ## Interfaces
 
 - [CliConfig](interfaces/CliConfig.md)
+- [CliDependencies](interfaces/CliDependencies.md)
 - [CliToolInstance](interfaces/CliToolInstance.md)
 - [CliToolOptions](interfaces/CliToolOptions.md)
 - [CoerceOptions](interfaces/CoerceOptions.md)
@@ -44,6 +45,7 @@
 - [createConfigLoader](functions/createConfigLoader.md)
 - [createHelpFormatter](functions/createHelpFormatter.md)
 - [createParamCoercer](functions/createParamCoercer.md)
+- [createS20Cli](functions/createS20Cli.md)
 - [formatCompletionsForShell](functions/formatCompletionsForShell.md)
 - [generateCompletionScript](functions/generateCompletionScript.md)
 - [promptSelect](functions/promptSelect.md)

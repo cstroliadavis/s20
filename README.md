@@ -7,8 +7,10 @@
 A fast, lightweight, and structured CLI time tracking tool built for **Bun** as a modular monolith
 with dedicated internal workspace packages:
 
-- `@s20/app`: Application domain logic, CSV storage engine, time calculations, and CLI integration.
-- `@s20/cli`: Lightweight CLI command engine, argument tokenizer, and autocompletion subsystem.
+- `@s20/app`: Isomorphic application and domain layer (entities, time utilities, task rules, storage ports, and service orchestration).
+- `@s20/storage`: Persistence layer adapters (`createCsvStorage`) and local filesystem storage path resolution.
+- `@s20/cli`: CLI presentation layer (`createS20Cli`), command engine, argument tokenizer, and autocompletion subsystem.
+- `@s20/logging`: Pluggable structured logging engine and rotating JSONL file plugin.
 - `@s20/csv`: RFC 4180 CSV parser, serializer, and file streaming library.
 - `@s20/yaml`: Zero-dependency YAML parser and serializer for CLI schemas.
 
@@ -326,17 +328,13 @@ The aggregate summary of all tracked tasks:
 S20 is fully typed and can be consumed programmatically in TypeScript or JavaScript projects:
 
 ```ts
-import {
-  createDefaultConfig,
-  createS20Cli,
-  createS20Service,
-  createStorage,
-  formatDuration,
-} from 's20';
+import { createDefaultConfig, createS20Service, formatDuration } from '@s20/app';
+import { createCsvStorage, createDefaultStoragePaths } from '@s20/storage';
 
-// 1. Initialize configuration and storage
-const config = createDefaultConfig('./my-data-folder');
-const storage = createStorage(config);
+// 1. Initialize configuration and storage adapter
+const config = createDefaultConfig();
+const paths = createDefaultStoragePaths('./my-data-folder');
+const storage = createCsvStorage(paths);
 
 // 2. Instantiate application service
 const service = createS20Service({ config, storage });

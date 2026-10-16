@@ -14,58 +14,12 @@ Service dependencies bundle required to instantiate the S20 service.
 
 > **config**: [`S20Config`](S20Config.md)
 
-Global configuration containing rounding rules, durations, and file paths.
+Global configuration containing rounding rules, durations, and category defaults.
 
 ***
 
 ### storage
 
-> **storage**: `object`
+> **storage**: [`S20Storage`](S20Storage.md)
 
-CSV storage engine interface for persisting events and synchronizing tasks.
-
-#### addEvent
-
-> **addEvent**: (`event`) => `Promise`\<[`EventRecord`](EventRecord.md)\>
-
-##### Parameters
-
-###### event
-
-[`EventInput`](EventInput.md)
-
-##### Returns
-
-`Promise`\<[`EventRecord`](EventRecord.md)\>
-
-#### getEvents
-
-> **getEvents**: () => `Promise`\<[`EventRecord`](EventRecord.md)[]\>
-
-##### Returns
-
-`Promise`\<[`EventRecord`](EventRecord.md)[]\>
-
-#### getTasks
-
-> **getTasks**: () => `Promise`\<[`TaskRecord`](TaskRecord.md)[]\>
-
-##### Returns
-
-`Promise`\<[`TaskRecord`](TaskRecord.md)[]\>
-
-#### getTaskSuggestions
-
-> **getTaskSuggestions**: () => `Promise`\<`string`[]\>
-
-##### Returns
-
-`Promise`\<`string`[]\>
-
-#### init
-
-> **init**: () => `Promise`\<`void`\>
-
-##### Returns
-
-`Promise`\<`void`\>
+Persistence port implementation for storing and querying events and tasks.

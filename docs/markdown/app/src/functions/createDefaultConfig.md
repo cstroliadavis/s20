@@ -6,27 +6,27 @@
 
 # Function: createDefaultConfig()
 
-> **createDefaultConfig**(`baseDir?`): [`S20Config`](../interfaces/S20Config.md)
+> **createDefaultConfig**(`overrides?`): [`S20Config`](../interfaces/S20Config.md)
 
-Creates default configuration instance resolved against base directory.
+Creates a platform-agnostic default S20 application configuration with optional overrides.
 
 ## Parameters
 
-### baseDir?
+### overrides?
 
-`string` = `...`
+`Partial`\<[`S20Config`](../interfaces/S20Config.md)\>
 
-Base root directory for data file resolution
+Optional partial configuration values to override defaults
 
 ## Returns
 
 [`S20Config`](../interfaces/S20Config.md)
 
-Configured S20 options
+Configured S20 domain options
 
 ## Example
 
 ```ts
-const config = createDefaultConfig('/path/to/project');
-// Returns config with eventsFilePath resolving to '/path/to/project/data/events.csv'
+const config = createDefaultConfig({ roundingIncrement: 30 });
+// Returns S20Config with 30-minute rounding increment and preset task defaults
 ```

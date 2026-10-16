@@ -6,25 +6,9 @@
 
 # Interface: S20Config
 
-Global configuration options for S20 time tracking.
+Global domain and application configuration options for S20 time tracking.
 
 ## Properties
-
-### categoryFilePath
-
-> **categoryFilePath**: `string`
-
-Path to the category CSV file.
-
-***
-
-### dataDir
-
-> **dataDir**: `string`
-
-Root directory housing all CSV storage files.
-
-***
 
 ### defaultCategory
 
@@ -39,38 +23,6 @@ Default category assigned to new tasks when unconfigured.
 > **defaultDuration**: `string`
 
 Default duration string when none is provided on the command line or in task defaults.
-
-***
-
-### eventsFilePath
-
-> **eventsFilePath**: `string`
-
-Path to the events chronological log CSV file.
-
-***
-
-### logDir
-
-> **logDir**: `string`
-
-Directory path where rotating JSONL application logs are stored.
-
-***
-
-### logMaxRows
-
-> **logMaxRows**: `number`
-
-Maximum number of rows per JSONL log file before rotating to a new file.
-
-***
-
-### projectFilePath
-
-> **projectFilePath**: `string`
-
-Path to the project definitions CSV file.
 
 ***
 
@@ -95,11 +47,3 @@ Minute increment step for rounding calculations (e.g. 15 for quarter-hour roundi
 > **taskDefaults**: `Record`\<`string`, [`TaskDefaultConfig`](TaskDefaultConfig.md) \| `undefined`\>
 
 Map of task names to specific duration and category overrides.
-
-***
-
-### tasksFilePath
-
-> **tasksFilePath**: `string`
-
-Path to the aggregate tasks status CSV file.

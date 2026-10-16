@@ -6,9 +6,9 @@
 
 # Function: createS20Service()
 
-> **createS20Service**(`deps`): `object`
+> **createS20Service**(`deps`): [`S20Service`](../interfaces/S20Service.md)
 
-Creates S20 application service coordinating time calculations and storage.
+Creates S20 application service coordinating time calculations, task rules, and storage.
 
 ## Parameters
 
@@ -16,59 +16,21 @@ Creates S20 application service coordinating time calculations and storage.
 
 [`ServiceDependencies`](../interfaces/ServiceDependencies.md)
 
-Config and storage dependencies
+Config and storage port dependencies
 
 ## Returns
 
+[`S20Service`](../interfaces/S20Service.md)
+
 Application service instance
-
-### getTaskSuggestions
-
-> **getTaskSuggestions**: () => `Promise`\<`string`[]\>
-
-#### Returns
-
-`Promise`\<`string`[]\>
-
-### listEvents
-
-> **listEvents**: () => `Promise`\<[`EventRecord`](../interfaces/EventRecord.md)[]\>
-
-#### Returns
-
-`Promise`\<[`EventRecord`](../interfaces/EventRecord.md)[]\>
-
-### listTasks
-
-> **listTasks**: () => `Promise`\<[`TaskRecord`](../interfaces/TaskRecord.md)[]\>
-
-#### Returns
-
-`Promise`\<[`TaskRecord`](../interfaces/TaskRecord.md)[]\>
-
-### recordEvent
-
-> **recordEvent**: (`options`) => `Promise`\<[`EventRecord`](../interfaces/EventRecord.md)\>
-
-Records an event and updates task records.
-
-#### Parameters
-
-##### options
-
-[`AddEventOptions`](../interfaces/AddEventOptions.md)
-
-#### Returns
-
-`Promise`\<[`EventRecord`](../interfaces/EventRecord.md)\>
 
 ## Example
 
 ```ts
 const config = createDefaultConfig();
-const storage = createStorage(config);
+const storage = createMemoryStorage();
 const service = createS20Service({ config, storage });
 
 const event = await service.recordEvent({ task: 'Ticket 5260' });
-// Records event in events.csv and updates tasks.csv
+// Records event and updates aggregate task via the injected storage port
 ```
