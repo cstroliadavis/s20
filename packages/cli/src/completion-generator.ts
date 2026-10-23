@@ -37,6 +37,7 @@ function generateBashCompletion(cliName: string): string {
     '  local cur prev',
     '  cur="${COMP_WORDS[COMP_CWORD]}"',
     '  prev="${COMP_WORDS[COMP_CWORD-1]}"',
+    "  local IFS=$'\\n'",
     '  local reply=$("${COMP_WORDS[0]}" completion complete bash -- "${COMP_WORDS[@]:1}" 2>/dev/null)',
     '  COMPREPLY=($(compgen -W "$reply" -- "$cur"))',
     '}',

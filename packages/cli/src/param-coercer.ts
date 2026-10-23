@@ -19,16 +19,14 @@ const FLAG_TRUTHY_VALUES = new Set(['1', 'true', 'y', 'yes']);
 const FLAG_FALSY_VALUES = new Set(['0', 'false', 'n', 'no']);
 
 /**
- * Validates and converts date parameters.
+ * Validates and converts date parameters to YYYY-MM-DD strings.
  */
-function coerceDate(value: unknown, paramName: string): Date {
-  const date = new Date(String(value));
-
-  if (Number.isNaN(date.getTime())) {
+function coerceDate(value: unknown, paramName: string): string {
+  try {
+    return Temporal.PlainDate.from(String(value).trim()).toString();
+  } catch {
     throw new TypeError(`Parameter '${paramName}' expects a valid date, received: '${value}'`);
   }
-
-  return date;
 }
 
 /**

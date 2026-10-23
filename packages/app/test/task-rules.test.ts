@@ -90,6 +90,31 @@ describe('task-rules', () => {
     expect(task.finished).toBe('2026-10-03 14:30');
   });
 
+  it('matches task-specific category presets case-insensitively', () => {
+    const { buildEvent, config } = setup({
+      config: {
+        taskDefaults: {
+          Deploy: { category: 'ops' },
+        },
+      },
+    });
+    const event = buildEvent({ task: 'deploy' });
+
+    const task = createNewTaskRecord(event, 1, config);
+
+    expect(task.category).toBe('ops');
+  });
+
+  it('rounds accumulated totalTime to 4 decimal places to prevent floating-point drift', () => {
+    const { buildEvent, buildTask } = setup();
+    const existing = buildTask({ totalTime: 0.1 });
+    const event = buildEvent({ duration: 0.2 });
+
+    const updated = applyEventToTask(existing, event);
+
+    expect(updated.totalTime).toBe(0.3);
+  });
+
   it('accumulates duration and updates finished timestamp without mutating original task', () => {
     const { buildEvent, buildTask } = setup();
     const existing = buildTask({ finished: '', totalTime: 2 });

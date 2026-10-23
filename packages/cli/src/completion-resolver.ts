@@ -1,8 +1,6 @@
 import type { CliConfig, CommandConfig, CompletionItem, ParamConfig, ParamItems } from './types.js';
 
 const GLOBAL_COMPLETIONS: CompletionItem[] = [
-  { description: 'Path to configuration file', value: '--config' },
-  { description: 'Path to configuration file', value: '-c' },
   { description: 'Display help information', value: '--help' },
   { description: 'Display help information', value: '-h' },
 ];
@@ -171,9 +169,14 @@ async function resolveRawItems(items?: ParamItems): Promise<unknown> {
 /**
  * Resolves completions when user is at the root command level.
  */
-function resolveRootCompletions(config: CliConfig, prefix: string): CompletionItem[] {
+async function resolveRootCompletions(
+  config: CliConfig,
+  prefix: string,
+): Promise<CompletionItem[]> {
   const cmdItems = config.commands.map(commandToCompletion);
-  const candidates = [...cmdItems, ...GLOBAL_COMPLETIONS];
+  const defaultCmd = config.commands.find((c) => c.isDefault);
+  const defaultPositionals = await collectPositionalItems(defaultCmd?.params);
+  const candidates = [...cmdItems, ...defaultPositionals, ...GLOBAL_COMPLETIONS];
 
   return filterCompletions(candidates, prefix);
 }

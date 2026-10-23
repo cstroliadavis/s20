@@ -16,7 +16,10 @@ describe('time-utils', () => {
     expect(parseDuration('45m')).toBe(0.75);
     expect(parseDuration('1h')).toBe(1);
     expect(parseDuration('1.5h')).toBe(1.5);
+    expect(parseDuration('1h 30m')).toBe(1.5);
+    expect(parseDuration('2h 15m')).toBe(2.25);
     expect(parseDuration('90m')).toBe(1.5);
+    expect(parseDuration('20m')).toBe(0.3333);
     expect(parseDuration('2.25')).toBe(2.25);
     expect(parseDuration('2')).toBe(2);
     expect(parseDuration(1.75)).toBe(1.75);

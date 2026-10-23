@@ -150,103 +150,6 @@ export interface PageContext {
 }
 
 /**
- * Options for creating a child execution span.
- */
-export interface CreateSpanOptions {
-  /**
-   * Enclosing module or component name.
-   */
-  className?: string;
-
-  /**
-   * Function generating trace correlation IDs for root spans.
-   */
-  correlationIdGenerator?: () => string;
-
-  /**
-   * Name of the executing function.
-   */
-  functionName?: string;
-
-  /**
-   * Parent span to link to, if this span is nested.
-   */
-  parentSpan?: ExecutionSpan;
-
-  /**
-   * Function generating span IDs.
-   */
-  spanIdGenerator?: () => string;
-}
-
-/**
- * Active execution span tracking timing and ancestry for a function call.
- */
-export interface ExecutionSpan {
-  /**
-   * Enclosing module or component name, when set.
-   */
-  className?: string;
-
-  /**
-   * Correlation ID shared across all spans in this trace.
-   */
-  correlationId: string;
-
-  /**
-   * Call nesting depth, starting at 0 for root spans.
-   */
-  depth: number;
-
-  /**
-   * Name of the executing function.
-   */
-  functionName?: string;
-
-  /**
-   * Span ID of the caller span, if nested.
-   */
-  parentSpanId?: string;
-
-  /**
-   * Unique ID for this span.
-   */
-  spanId: string;
-
-  /**
-   * Performance timestamp in milliseconds when the span started.
-   */
-  startTime: number;
-}
-
-/**
- * Manages active trace spans across asynchronous execution paths.
- */
-export interface ContextStore {
-  /**
-   * Creates a child span linked to a parent span or specified options.
-   */
-  createChildSpan: {
-    (options?: CreateSpanOptions): ExecutionSpan;
-    (
-      parentSpan?: ExecutionSpan,
-      correlationIdGenerator?: () => string,
-      spanIdGenerator?: () => string,
-    ): ExecutionSpan;
-  };
-
-  /**
-   * Returns the span currently active in this async context.
-   */
-  getActiveSpan: () => ExecutionSpan | undefined;
-
-  /**
-   * Runs a callback with the given span set as the active context.
-   */
-  runWithSpan: <T>(span: ExecutionSpan, callback: () => T) => T;
-}
-
-/**
  * Error details captured when an error is logged.
  */
 export interface LogErrorInfo {
@@ -653,15 +556,6 @@ export interface LogFunctionDeps {
     getConfig: () => LoggerConfig;
     resolveEffective: (page?: PageContext) => EffectiveSettings;
     updateConfig: (patch: Partial<LoggerConfig>) => LoggerConfig;
-  };
-
-  /**
-   * Context store for managing trace spans.
-   */
-  contextStore: {
-    createChildSpan: ContextStore['createChildSpan'];
-    getActiveSpan: () => ExecutionSpan | undefined;
-    runWithSpan: <T>(span: ExecutionSpan, fn: () => T) => T;
   };
 
   /**

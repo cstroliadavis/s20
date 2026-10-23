@@ -4,7 +4,6 @@
 import { buildLoggerMetadata } from './config.js';
 import { isLevelEnabled } from './levels.js';
 import type {
-  ExecutionSpan,
   LogEvent,
   LogFunction,
   LogFunctionDeps,
@@ -24,14 +23,12 @@ interface EmitLogParams {
 }
 
 /**
- * Builds a log event from a direct log call, copying fields from any active span.
+ * Builds a log event from a direct log call.
  */
 function createDirectLogEvent(params: EmitLogParams): LogEvent {
-  const activeSpan = params.deps.contextStore.getActiveSpan();
-  const spanMeta = extractSpanMetadata(activeSpan);
   const config = params.deps.configManager.getConfig();
 
-  const baseEvent: LogEvent = {
+  return {
     eventType: params.level,
     level: params.level,
     logger: buildLoggerMetadata(params.deps.page, config),
@@ -39,8 +36,6 @@ function createDirectLogEvent(params: EmitLogParams): LogEvent {
     metadata: normalizeMetadata(params.data),
     timestamp: Temporal.Now.instant().toString(),
   };
-
-  return Object.assign(baseEvent, spanMeta);
 }
 
 /**
@@ -64,22 +59,6 @@ function emitDirectLog(params: EmitLogParams): void {
   const event = createDirectLogEvent(params);
 
   params.deps.emitter.emit(params.level, event);
-}
-
-/**
- * Copies span ID, correlation ID, and nesting depth from the active span.
- */
-function extractSpanMetadata(span?: ExecutionSpan): Partial<LogEvent> {
-  if (!span) return {};
-
-  return {
-    className: span.className,
-    correlationId: span.correlationId,
-    depth: span.depth,
-    functionName: span.functionName,
-    parentSpanId: span.parentSpanId,
-    spanId: span.spanId,
-  };
 }
 
 /**

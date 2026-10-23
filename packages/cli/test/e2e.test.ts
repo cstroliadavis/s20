@@ -19,7 +19,7 @@ describe('e2e cli execution', () => {
     function runCli(args: string[]) {
       return Bun.spawnSync(['bun', 'run', BIN_PATH, ...args], {
         cwd: tmpDir,
-        env: { ...process.env },
+        env: { ...process.env, S20_DATA_DIR: tmpDir },
       });
     }
 

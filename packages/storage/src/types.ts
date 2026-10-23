@@ -10,11 +10,6 @@
  */
 export interface StoragePaths {
   /**
-   * Path to the category CSV file.
-   */
-  categoryFilePath: string;
-
-  /**
    * Root directory housing all CSV storage files.
    */
   dataDir: string;
@@ -33,11 +28,6 @@ export interface StoragePaths {
    * Maximum number of rows per JSONL log file before rotating to a new file.
    */
   logMaxRows: number;
-
-  /**
-   * Path to the project definitions CSV file.
-   */
-  projectFilePath: string;
 
   /**
    * Path to the aggregate tasks status CSV file.

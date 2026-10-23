@@ -84,3 +84,25 @@ export function createDefaultConfig(overrides?: Partial<S20Config>): S20Config {
 
   return { ...defaults, ...overrides };
 }
+
+/**
+ * Finds task default configuration matching task name case-insensitively.
+ *
+ * @param taskName Task name to look up
+ * @param config Active S20 configuration
+ * @returns Matching TaskDefaultConfig if configured
+ * @example
+ * ```ts
+ * const def = findTaskDefault('break', createDefaultConfig());
+ * // Returns { duration: '15m' }
+ * ```
+ */
+export function findTaskDefault(
+  taskName: string,
+  config: S20Config,
+): TaskDefaultConfig | undefined {
+  const lower = taskName.trim().toLowerCase();
+  const entry = Object.entries(config.taskDefaults).find(([k]) => k.toLowerCase() === lower);
+
+  return entry?.[1];
+}

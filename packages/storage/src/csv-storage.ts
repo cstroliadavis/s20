@@ -18,14 +18,22 @@ const log = logger({ category: 'storage', name: 'csv-storage.ts' });
 export type CsvStorageOptions = Pick<StoragePaths, 'dataDir' | 'eventsFilePath' | 'tasksFilePath'>;
 
 /**
+ * Internal state for the CSV storage adapter.
+ */
+interface CsvStorageState {
+  initialized: boolean;
+  paths: CsvStorageOptions;
+}
+
+/**
  * Appends a single event record to events.csv.
  */
-async function appendEventRecord(event: EventRecord, paths: CsvStorageOptions): Promise<void> {
-  await initCsvStorage(paths);
+async function appendEventRecord(event: EventRecord, state: CsvStorageState): Promise<void> {
+  await ensureInitialized(state);
 
   const row = mapEventToRow(event);
 
-  await appendCsvFile(paths.eventsFilePath, [row], { columns: EVENT_COLUMNS });
+  await appendCsvFile(state.paths.eventsFilePath, [row], { columns: EVENT_COLUMNS });
   log.info('Persisted event record', {
     duration: event.duration,
     id: event.id,
@@ -36,12 +44,12 @@ async function appendEventRecord(event: EventRecord, paths: CsvStorageOptions): 
 /**
  * Appends a single task record to tasks.csv.
  */
-async function appendTaskRecord(task: TaskRecord, paths: CsvStorageOptions): Promise<void> {
-  await initCsvStorage(paths);
+async function appendTaskRecord(task: TaskRecord, state: CsvStorageState): Promise<void> {
+  await ensureInitialized(state);
 
   const row = mapTaskToRow(task);
 
-  await appendCsvFile(paths.tasksFilePath, [row], { columns: TASK_COLUMNS });
+  await appendCsvFile(state.paths.tasksFilePath, [row], { columns: TASK_COLUMNS });
 }
 
 /**
@@ -54,6 +62,16 @@ async function ensureFileWithHeaders(filePath: string, headers: string[]): Promi
   if (!exists || file.size === 0) {
     await writeCsvFile(filePath, [headers]);
   }
+}
+
+/**
+ * Initializes CSV storage once per adapter instance.
+ */
+async function ensureInitialized(state: CsvStorageState): Promise<void> {
+  if (state.initialized) return;
+
+  await initCsvStorage(state.paths);
+  state.initialized = true;
 }
 
 /**
@@ -145,10 +163,10 @@ function mapTaskToRow(task: TaskRecord): Record<string, string> {
 /**
  * Reads and maps all events from disk.
  */
-async function readEventRecords(paths: CsvStorageOptions): Promise<EventRecord[]> {
-  await initCsvStorage(paths);
+async function readEventRecords(state: CsvStorageState): Promise<EventRecord[]> {
+  await ensureInitialized(state);
 
-  const rows = (await readCsvFile(paths.eventsFilePath, {
+  const rows = (await readCsvFile(state.paths.eventsFilePath, {
     columns: true,
   })) as unknown as Record<string, string>[];
 
@@ -158,10 +176,10 @@ async function readEventRecords(paths: CsvStorageOptions): Promise<EventRecord[]
 /**
  * Reads and maps all tasks from disk.
  */
-async function readTaskRecords(paths: CsvStorageOptions): Promise<TaskRecord[]> {
-  await initCsvStorage(paths);
+async function readTaskRecords(state: CsvStorageState): Promise<TaskRecord[]> {
+  await ensureInitialized(state);
 
-  const rows = (await readCsvFile(paths.tasksFilePath, {
+  const rows = (await readCsvFile(state.paths.tasksFilePath, {
     columns: true,
   })) as unknown as Record<string, string>[];
 
@@ -171,12 +189,12 @@ async function readTaskRecords(paths: CsvStorageOptions): Promise<TaskRecord[]> 
 /**
  * Writes updated tasks collection back to CSV file.
  */
-async function saveTaskRecords(tasks: TaskRecord[], paths: CsvStorageOptions): Promise<void> {
-  await initCsvStorage(paths);
+async function saveTaskRecords(tasks: TaskRecord[], state: CsvStorageState): Promise<void> {
+  await ensureInitialized(state);
 
   const rows = tasks.map(mapTaskToRow);
 
-  await writeCsvFile(paths.tasksFilePath, rows, { columns: TASK_COLUMNS });
+  await writeCsvFile(state.paths.tasksFilePath, rows, { columns: TASK_COLUMNS });
 }
 
 /**
@@ -193,17 +211,18 @@ async function saveTaskRecords(tasks: TaskRecord[], paths: CsvStorageOptions): P
  * ```
  */
 export function createCsvStorage(paths: CsvStorageOptions): S20Storage {
-  const _ = {
+  const _: CsvStorageState = {
+    initialized: false,
     paths,
   };
 
   return {
-    appendEvent: (event: EventRecord) => appendEventRecord(event, _.paths),
-    appendTask: (task: TaskRecord) => appendTaskRecord(task, _.paths),
-    getEvents: () => readEventRecords(_.paths),
-    getTasks: () => readTaskRecords(_.paths),
-    init: () => initCsvStorage(_.paths),
-    saveTasks: (tasks: TaskRecord[]) => saveTaskRecords(tasks, _.paths),
+    appendEvent: (event: EventRecord) => appendEventRecord(event, _),
+    appendTask: (task: TaskRecord) => appendTaskRecord(task, _),
+    getEvents: () => readEventRecords(_),
+    getTasks: () => readTaskRecords(_),
+    init: () => ensureInitialized(_),
+    saveTasks: (tasks: TaskRecord[]) => saveTaskRecords(tasks, _),
   };
 }
 

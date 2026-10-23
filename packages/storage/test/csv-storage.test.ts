@@ -85,6 +85,8 @@ describe('csv-storage', () => {
     expect(tasks).toEqual([]);
     expect(fs.existsSync(paths.eventsFilePath)).toBe(true);
     expect(fs.existsSync(paths.tasksFilePath)).toBe(true);
+    expect('categoryFilePath' in paths).toBe(false);
+    expect('projectFilePath' in paths).toBe(false);
   });
 
   it('appends and reads back event and task records directly from CSV files', async () => {

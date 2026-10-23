@@ -21,6 +21,7 @@ export interface TimeRoundingOptions {
   increment?: number;
 }
 
+const COMPOUND_DURATION_REGEX = /^(?:(\d+(?:\.\d+)?)h)?\s*(?:(\d+(?:\.\d+)?)m)?$/i;
 const DURATION_FORMATTER = new Intl.DurationFormat('en', { style: 'narrow' });
 
 /**
@@ -49,25 +50,14 @@ function normalizeTimeString(timeStr: string): string {
 }
 
 /**
- * Parses hour-denominated duration strings (e.g. '1.5h').
+ * Parses hour and minute unit duration strings (e.g. '1.5h', '15m', '1h 30m').
  */
-function parseHourString(val: string): number {
-  const num = Number(val.replace(/h$/i, '').trim());
+function parseCompoundUnits(trimmed: string): number | undefined {
+  const match = trimmed.match(COMPOUND_DURATION_REGEX);
 
-  if (Number.isNaN(num)) return 1;
+  if (!match) return undefined;
 
-  return num;
-}
-
-/**
- * Parses minute-denominated duration strings (e.g. '15m').
- */
-function parseMinuteString(val: string): number {
-  const num = Number(val.replace(/m$/i, '').trim());
-
-  if (Number.isNaN(num)) return 1;
-
-  return num / 60;
+  return roundHours(toFiniteNumber(match[1]) + toFiniteNumber(match[2]) / 60);
 }
 
 /**
@@ -78,19 +68,34 @@ function parseNumericDuration(val: string): number {
 
   if (Number.isNaN(num)) return 1;
 
-  return num;
+  return roundHours(num);
 }
 
 /**
- * Dispatches duration string parsing based on unit suffix.
+ * Dispatches duration string parsing for compound units or plain decimal hours.
  */
 function parseRawDuration(val: string): number {
-  const trimmed = val.trim().toLowerCase();
+  const trimmed = val.trim();
 
-  if (trimmed.endsWith('m')) return parseMinuteString(trimmed);
-  if (trimmed.endsWith('h')) return parseHourString(trimmed);
+  if (!trimmed) return 1;
 
-  return parseNumericDuration(trimmed);
+  return parseCompoundUnits(trimmed) ?? parseNumericDuration(trimmed);
+}
+
+/**
+ * Rounds decimal hours to 4 decimal places to prevent floating-point drift.
+ */
+function roundHours(hours: number): number {
+  return Math.round(hours * 10000) / 10000;
+}
+
+/**
+ * Converts a string capture group to a finite number or 0.
+ */
+function toFiniteNumber(val?: string): number {
+  const num = Number(val);
+
+  return Number.isNaN(num) ? 0 : num;
 }
 
 /**
@@ -235,7 +240,7 @@ export function getTodayDateString(date?: Date): string {
  * ```
  */
 export function parseDuration(durationVal: string | number | undefined): number {
-  if (typeof durationVal === 'number') return durationVal;
+  if (typeof durationVal === 'number') return roundHours(durationVal);
   if (!durationVal) return 1;
 
   return parseRawDuration(String(durationVal));

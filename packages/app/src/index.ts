@@ -1,3 +1,4 @@
+import './ambient.d.ts';
 export {
   applyEventToTask,
   computeNextId,
@@ -13,7 +14,7 @@ export {
   parseDuration,
   roundTimeToIncrement,
 } from './time-utils.js';
-export { createDefaultConfig } from './config.js';
+export { createDefaultConfig, findTaskDefault } from './config.js';
 export { createMemoryStorage } from './memory-storage.js';
 export { createS20Service } from './s20-service.js';
 export type { AddEventOptions, S20Service, ServiceDependencies } from './s20-service.js';

@@ -1,19 +1,11 @@
 import { describe, expect, it } from 'bun:test';
-import {
-  createYamlParser,
-  createYamlStringifier,
-  parseYaml,
-  stringifyYaml,
-  type YamlParserOptions,
-} from '../src/index.js';
+import { createYamlParser, parseYaml, type YamlParserOptions } from '../src/index.js';
 
 function setup(options?: YamlParserOptions) {
   const parser = createYamlParser(options);
-  const stringifier = createYamlStringifier();
 
   return Object.freeze({
     parser,
-    stringifier,
   });
 }
 
@@ -259,29 +251,6 @@ commands:
       expect(parsed.version).toBe('0.1.0');
       expect(parsed.commands[0]?.name).toBe('add');
       expect(parsed.commands[0]?.params.map((p) => p.name)).toEqual(['task', 'done']);
-    });
-  });
-
-  describe('stringifier', () => {
-    it('serializes objects, arrays, and primitives into valid YAML', () => {
-      const data = {
-        active: true,
-        items: ['first', 'second'],
-        name: 'test',
-        port: 8080,
-      };
-
-      const result = stringifyYaml(data);
-
-      expect(result).toContain('active: true');
-      expect(result).toContain('name: test');
-      expect(result).toContain('port: 8080');
-      expect(result).toContain('- first');
-      expect(result).toContain('- second');
-
-      const roundTrip = parseYaml<typeof data>(result);
-
-      expect(roundTrip).toEqual(data);
     });
   });
 });

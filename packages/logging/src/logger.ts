@@ -2,7 +2,6 @@
  * @file Global logger singleton and scoped logger factory.
  */
 import { createConfigManager } from './config.js';
-import { defaultContextStore } from './context.js';
 import { createEventEmitter } from './events.js';
 import { createLogFunction } from './log-function.js';
 import type {
@@ -19,7 +18,6 @@ const PAGE_CONTEXT_KEYS = new Set(['category', 'location', 'name', 'namespace'])
 
 const _ = {
   configManager: createConfigManager(),
-  contextStore: defaultContextStore,
   emitter: createEventEmitter(),
   rootLog: null as LogFunction | null,
 };
@@ -41,7 +39,6 @@ function getOrCreateRootLog(): LogFunction {
 
   _.rootLog = createLogFunction({
     configManager: _.configManager,
-    contextStore: _.contextStore,
     emitter: _.emitter,
   });
 

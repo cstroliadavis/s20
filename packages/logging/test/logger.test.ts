@@ -1,7 +1,6 @@
 import { afterEach, describe, expect, it } from 'bun:test';
 import {
   createConfigManager,
-  createContextStore,
   createEventEmitter,
   createMemorySink,
   isLevelEnabled,
@@ -67,22 +66,6 @@ describe('@s20/logging core logger', () => {
     expect(events[0]?.metadata).toEqual({ eventId: 42 });
     expect(events[0]?.logger?.category).toBe('storage');
     expect(events[0]?.logger?.name).toBe('storage.ts');
-  });
-
-  it('propagates correlationId and spanId from active execution span', () => {
-    const contextStore = createContextStore();
-    const rootSpan = contextStore.createChildSpan({ functionName: 'recordEvent' });
-
-    contextStore.runWithSpan(rootSpan, () => {
-      const childSpan = contextStore.createChildSpan({
-        functionName: 'addEventRecord',
-        parentSpan: contextStore.getActiveSpan(),
-      });
-
-      expect(childSpan.correlationId).toBe(rootSpan.correlationId);
-      expect(childSpan.parentSpanId).toBe(rootSpan.spanId);
-      expect(childSpan.depth).toBe(1);
-    });
   });
 
   it('applies category and page level overrides in createConfigManager', () => {

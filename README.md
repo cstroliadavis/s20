@@ -363,7 +363,7 @@ The default configuration factory can be customized with custom paths, rounding 
 category rules:
 
 ```ts
-import { createDefaultConfig, type S20Config } from 's20';
+import { createDefaultConfig, type S20Config } from '@s20/app';
 
 const config: S20Config = createDefaultConfig();
 config.roundingIncrement = 30; // Round to 30-minute intervals

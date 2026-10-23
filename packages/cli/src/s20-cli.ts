@@ -5,7 +5,6 @@
  * Loads the YAML CLI schema, injects dynamic task completion providers, and
  * maps CLI events ('event-add' and 'event-list') to service operations with terminal output.
  */
-import fs from 'node:fs';
 import path from 'node:path';
 import type { S20Service } from '@s20/app';
 import { logger } from '@s20/logging';
@@ -121,14 +120,10 @@ function registerCliHandlers(cliTool: CliToolInstance, service: S20Service): voi
 
 /**
  * Resolves the absolute filesystem path to the YAML CLI schema definition file, checking an
- * explicit path override, current directory, or package root fallback.
+ * explicit path override or package root fallback.
  */
 function resolveSchemaPath(configPath?: string): string {
   if (configPath) return configPath;
-
-  const localPath = path.resolve(import.meta.dirname, 'cli.yaml');
-
-  if (fs.existsSync(localPath)) return localPath;
 
   return path.resolve(import.meta.dirname, '../cli.yaml');
 }

@@ -6,7 +6,7 @@
  * and querying tasks across any presentation or persistence layer.
  */
 import { logger } from '@s20/logging';
-import type { S20Config } from './config.js';
+import { findTaskDefault, type S20Config } from './config.js';
 import {
   applyEventToTask,
   computeNextId,
@@ -129,11 +129,9 @@ function formatDateObject(date: Date): string {
  * Retrieves default duration string for a task or general fallback.
  */
 function getTaskDefaultDuration(task: string, config: S20Config): string {
-  const taskDef = config.taskDefaults[task];
+  const taskDef = findTaskDefault(task, config);
 
-  if (!taskDef) return config.defaultDuration;
-
-  return taskDef.duration ?? config.defaultDuration;
+  return taskDef?.duration ?? config.defaultDuration;
 }
 
 /**

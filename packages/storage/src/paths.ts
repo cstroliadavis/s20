@@ -18,16 +18,16 @@ import type { StoragePaths } from './types.js';
  * // Returns paths with eventsFilePath resolving to '/path/to/project/data/events.csv'
  * ```
  */
-export function createDefaultStoragePaths(baseDir: string = process.cwd()): StoragePaths {
+export function createDefaultStoragePaths(
+  baseDir: string = process.env.S20_DATA_DIR ?? process.cwd(),
+): StoragePaths {
   const dataDir = path.resolve(baseDir, 'data');
 
   return {
-    categoryFilePath: path.join(dataDir, 'category.csv'),
     dataDir,
     eventsFilePath: path.join(dataDir, 'events.csv'),
     logDir: path.join(dataDir, 'logs'),
     logMaxRows: 5000,
-    projectFilePath: path.join(dataDir, 'project.csv'),
     tasksFilePath: path.join(dataDir, 'tasks.csv'),
   };
 }

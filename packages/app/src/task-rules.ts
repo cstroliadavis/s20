@@ -4,7 +4,7 @@
  * Encapsulates persistence-independent logic for creating tasks, accumulating total duration,
  * computing completion timestamps, and prioritizing active tasks for autocompletion.
  */
-import type { S20Config } from './config.js';
+import { findTaskDefault, type S20Config } from './config.js';
 import { calculateFinishTime } from './time-utils.js';
 import type { EventInput, TaskRecord } from './types.js';
 
@@ -21,9 +21,16 @@ function computeFinishTimestamp(event: EventInput): string {
  * Resolves category for task name from defaults or general fallback.
  */
 function resolveTaskCategory(taskName: string, config: S20Config): string {
-  const taskDef = config.taskDefaults[taskName];
+  const taskDef = findTaskDefault(taskName, config);
 
   return taskDef?.category ?? config.defaultCategory;
+}
+
+/**
+ * Rounds accumulated hours to 4 decimal places to avoid floating-point drift.
+ */
+function roundTotalTime(hours: number): number {
+  return Math.round(hours * 10000) / 10000;
 }
 
 /**
@@ -60,7 +67,7 @@ export function applyEventToTask(existing: TaskRecord, event: EventInput): TaskR
   return {
     ...existing,
     finished: computeFinishTimestamp(event),
-    totalTime: existing.totalTime + event.duration,
+    totalTime: roundTotalTime(existing.totalTime + event.duration),
   };
 }
 
@@ -111,7 +118,7 @@ export function createNewTaskRecord(
     priority: '',
     started: `${event.date} ${event.start}`,
     task: event.task,
-    totalTime: event.duration,
+    totalTime: roundTotalTime(event.duration),
     urgency: '',
   };
 }

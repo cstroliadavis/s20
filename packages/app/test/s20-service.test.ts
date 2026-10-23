@@ -152,8 +152,10 @@ describe('s20-service', () => {
     });
 
     const event = await service.recordEvent({ task: 'Break' });
+    const lowerEvent = await service.recordEvent({ task: 'break' });
 
     expect(event.duration).toBe(0.25);
+    expect(lowerEvent.duration).toBe(0.25);
   });
 
   it('accumulates total time and updates existing task when case-insensitive match exists', async () => {

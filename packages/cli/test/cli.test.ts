@@ -79,6 +79,14 @@ describe('cli workspace engine', () => {
     expect(coerceTime('09:05', 'start')).toBe('09:05');
   });
 
+  it('coerces YYYY-MM-DD date strings without UTC timezone day shifting', () => {
+    const { coercer } = setup();
+
+    const dateStr = coercer.coerce({ name: 'date', type: 'date' }, '2026-10-03');
+
+    expect(dateStr).toBe('2026-10-03');
+  });
+
   it('renders help text when --help flag is passed', async () => {
     const logSpy = spyOn(console, 'log').mockImplementation(() => {});
     const { cli } = setup();
@@ -102,10 +110,16 @@ describe('cli workspace engine', () => {
     });
 
     const zshScript = generateCompletionScript('zsh', 's20');
+    const bashScript = generateCompletionScript('bash', 's20');
     const completions = await resolveCompletions(cli.getConfig(), ['add', '--task', 'Ticket 2']);
+    const rootCompletions = await resolveCompletions(cli.getConfig(), ['Ticket']);
+    const allRoot = await resolveCompletions(cli.getConfig(), ['']);
 
     expect(zshScript).toContain('#compdef s20');
+    expect(bashScript).toContain("local IFS=$'\\n'");
     expect(completions.map((c) => c.value)).toEqual(['Ticket 200']);
+    expect(rootCompletions.map((c) => c.value)).toEqual(['Ticket 100', 'Ticket 200']);
+    expect(allRoot.map((c) => c.value)).not.toContain('--config');
   });
 });
 
